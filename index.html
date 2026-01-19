@@ -180,6 +180,7 @@
     </div>
 	
 	<div class="container">
+		<div id="preview-container"></div>
 		<div id="previewArea" class="footer-note"></div>
 	</div>
   </div>
@@ -310,6 +311,26 @@ document.addEventListener('DOMContentLoaded', () => {
 	  const v = e.target.checked;
 	  document.querySelectorAll('.catChk').forEach(cb => cb.checked = v);
 	});
+	
+	/* ---------- Select/Deselect tutte le difficoltà ---------- */
+	// Seleziona gli elementi
+	const diffAllCheckbox = document.getElementById('diff_all');
+	const diffCheckboxes = Array.from(document.querySelectorAll('.diffChk'));
+
+	// Quando si cambia "Tutte le difficoltà"
+	diffAllCheckbox.addEventListener('change', (e) => {
+	  const checked = e.target.checked;
+	  diffCheckboxes.forEach(cb => cb.checked = checked);
+	});
+
+	// Quando si cambia una singola difficoltà, aggiorna lo stato di "Tutte le difficoltà"
+	diffCheckboxes.forEach(cb => {
+	  cb.addEventListener('change', () => {
+		const allChecked = diffCheckboxes.every(d => d.checked);
+		diffAllCheckbox.checked = allChecked;
+	  });
+	});
+
 
 	/* ---------- Filtri lettura ---------- */
 	function getSelectedFilters(){
@@ -473,10 +494,10 @@ document.addEventListener('DOMContentLoaded', () => {
 	  container.style.background = '#fff';
 
 	  const header = document.createElement('div');
-	  header.innerHTML = `<h1 style="margin:0;color:${'#120E01'}">Quiz esportato</h1>
+	  header.innerHTML = `<h1 style="margin:0;color:${'#120E01'}">NelGrimorio Quiz NERD</h1>
 		<div style="margin-top:6px">Totale domande: <strong>${questions.length}</strong></div>
 		<div style="margin-top:6px">Filtri: Difficoltà=${cfg.diffs.join(',')}, Ordinamento=${cfg.order}, Decrescente=${cfg.desc}</div>
-		<hr style="margin:12px 0">`;
+		<hr style="margin:12px 0">; <style> .real-answer { background:#691258; color:#fff; padding:4px 6px; border-radius:4px; display:inline-block;} </style>`
 	  container.appendChild(header);
 
 	  questions.forEach((q, idx) => {
@@ -515,8 +536,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		const p = document.createElement('div'); p.style.marginBottom='6px'; p.innerText = `${idx+1}. ${sol}`; container.appendChild(p);
 	  });
 
-	  document.getElementsByClassName("preview-container").innerHTML = "";
-	  document.getElementsByClassName("preview-container").appendChild(container);
+	  document.getElementById("preview-container").innerHTML = "";
+	  document.getElementById("preview-container").appendChild(container);
 
 	  const opt = { margin:10, filename:`quiz_export_${Date.now()}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'pt',format:'a4',orientation:'portrait'} };
 	  try {
