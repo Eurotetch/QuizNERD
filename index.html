@@ -2,219 +2,248 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Configurator Quiz NERD</title>
+
+  <!-- Stili con palette fornita -->
   <style>
-    body { font-family: Arial, Helvetica, sans-serif; margin:18px; color:#111 }
-    h1 { margin-bottom:6px }
-    .row { display:flex; gap:12px; align-items:center; margin-bottom:8px; flex-wrap:wrap }
-    label { font-weight:600; margin-right:6px }
-    select,input,textarea { padding:6px; border:1px solid #ccc; border-radius:4px }
-    .box { border:1px solid #e0e0e0; padding:12px; border-radius:6px; margin-bottom:12px }
-    button { background:#0b79d0; color:#fff; border:none; padding:10px 14px; border-radius:6px; cursor:pointer }
-    button.secondary { background:#666 }
-    .small { font-size:0.9em; color:#444 }
-    #viewer { position:fixed; inset:0; background:#000000cc; display:none; align-items:center; justify-content:center; z-index:9999 }
-    #slide { background:#fff; padding:30px; width:80%; max-width:1100px; height:80%; overflow:auto; border-radius:8px }
-    .controls { margin-top:12px; display:flex; gap:8px }
-    .list { max-height:220px; overflow:auto; border:1px solid #ddd; padding:8px; border-radius:6px; min-width:260px }
-    .flexcol { display:flex; flex-direction:column; gap:8px }
-    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+    :root{
+      --nero:#120E01;
+      --bianco:#F5F4F2;
+      --giallo:#DCB339;
+      --porpora:#691258;
+      --card-bg: #fff;
+    }
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--nero) 0%, #1b1408 100%);color:var(--bianco);font-family:Inter, Arial, Helvetica, sans-serif}
+    .container{max-width:1200px;margin:28px auto;padding:20px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;border:2px solid rgba(255,255,255,0.03)}
+    header{display:flex;align-items:center;gap:16px}
+    header img{height:64px}
+    h1{margin:0;font-size:1.6rem;color:var(--giallo)}
+    .subtitle{color:#d9cfa8;margin-top:4px;font-size:0.95rem}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:18px;margin-top:18px}
+    .card{background:rgba(255,255,255,0.03);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.04)}
+    label{display:block;font-weight:700;margin-bottom:6px;color:var(--bianco)}
+    .list{max-height:320px;overflow:auto;padding:8px;border-radius:8px;background:rgba(0,0,0,0.12)}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    input[type="file"]{color:var(--bianco)}
+    input[type="number"]{width:100px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:var(--bianco)}
+    select, button{padding:8px 10px;border-radius:8px;border:none}
+    button.primary{background:var(--giallo);color:var(--nero);font-weight:700}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--bianco)}
+    .small{font-size:0.9rem;color:#d6cfa8}
+    .controls{display:flex;gap:8px;align-items:center;margin-top:12px}
+    #previewArea{margin-top:12px;color:var(--bianco)}
+    /* viewer */
+    #viewer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:9999}
+    #slide{background:var(--bianco);color:var(--nero);width:88%;height:86%;border-radius:10px;padding:28px;overflow:auto}
+    .viewer-controls{display:flex;gap:8px;justify-content:center;margin-top:12px}
+    /* checkbox list styling */
+    .chk{display:flex;align-items:center;gap:8px;padding:6px;border-radius:6px}
+    .footer-note{margin-top:12px;color:#cfc6a0;font-size:0.9rem}
+    @media (max-width:980px){ .grid{grid-template-columns:1fr; } header img{height:48px} }
   </style>
 
   <!-- Librerie -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/docx@7.2.0/build/index.umd.js"></script>
 </head>
 <body>
-  <h1>Configurator Quiz NERD</h1>
+  <div class="container">
+    <header>
+      <img src="logo.png" alt="Logo" id="logo" onerror="this.style.display='none'"/>
+      <div>
+        <h1>Configurator Quiz NERD</h1>
+        <div class="subtitle">Carica il tuo Excel, applica filtri e genera PDF per la serata quiz</div>
+      </div>
+    </header>
 
-  <div class="box">
-    <div class="row">
-      <label>Carica file Excel (.xlsx)</label>
-      <input id="fileInput" type="file" accept=".xlsx,.xls" />
-      <button id="loadBtn">Carica</button>
-      <span class="small">Ogni foglio � considerato una categoria</span>
-    </div>
-
-    <div id="metaArea" style="display:none">
-      <div class="grid2">
-        <div>
-          <label>TIPOLOGIE DOMANDE</label>
-          <div class="list" id="typesArea"></div>
-          <div class="small" style="margin-top:6px">Seleziona le tipologie desiderate; le percentuali saranno calcolate automaticamente.</div>
+    <div class="grid">
+      <!-- Colonna sinistra: filtri -->
+      <div class="card">
+        <label>Carica file Excel (.xlsx)</label>
+        <div class="row">
+          <input id="fileInput" type="file" accept=".xlsx,.xls" />
+          <button id="loadBtn" class="ghost">Carica</button>
         </div>
+        <div style="height:12px"></div>
 
-        <div>
-          <label>CATEGORIE (foglio = categoria)</label>
-		  <label><input id="toggleAllCats" type="checkbox" /> Seleziona/Deseleziona tutte</label>
-          <div class="list" id="catsArea"></div>
-          <div style="margin-top:8px">
-            <label>Carica preset categorie (file .txt, una categoria per riga)</label>
+        <label>TIPOLOGIE DOMANDE</label>
+        <div id="typesArea" class="list"></div>
+
+        <div style="height:12px"></div>
+        <label>CATEGORIE</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <label class="small"><input id="toggleAllCats" type="checkbox" /> Seleziona/Deseleziona tutte</label>
+          <div style="margin-left:auto;display:flex;gap:6px">
             <input id="presetInput" type="file" accept=".txt" />
-            <button id="applyPresetBtn" class="secondary">Applica preset</button>
-			<button id="exportPresetBtn" class="secondary">Esporta preset</button>
+            <button id="applyPresetBtn" class="ghost">Importa preset</button>
+            <button id="exportPresetBtn" class="ghost">Esporta preset</button>
           </div>
         </div>
-      </div>
+        <div id="catsArea" class="list"></div>
 
-      <div style="margin-top:12px" class="row">
-        <div>
-          <label>DIFFICOLT�</label>
-          <div style="display:flex; gap:8px; align-items:center; margin-left:6px">
-            <label><input type="checkbox" data-diff="all" id="diff_all" /> Tutte le difficolt�</label>
-            <label><input type="checkbox" data-diff="?" class="diffChk" /> Facili ?</label>
-            <label><input type="checkbox" data-diff="??" class="diffChk" /> Medie ??</label>
-            <label><input type="checkbox" data-diff="???" class="diffChk" /> Difficili ???</label>
-            <label><input type="checkbox" data-diff="????" class="diffChk" /> Estreme ????</label>
+        <div style="height:12px"></div>
+        <label>DIFFICOLTÀ</label>
+        <div class="row">
+          <label class="chk"><input id="diff_all" type="checkbox" /> Tutte le difficoltà</label>
+          <label class="chk"><input class="diffChk" data-diff="⭐" type="checkbox" /> Facili ★</label>
+          <label class="chk"><input class="diffChk" data-diff="⭐⭐" type="checkbox" /> Medie ★★</label>
+          <label class="chk"><input class="diffChk" data-diff="⭐⭐⭐" type="checkbox" /> Difficili ★★★</label>
+          <label class="chk"><input class="diffChk" data-diff="⭐⭐⭐⭐" type="checkbox" /> Estreme ★★★★</label>
+        </div>
+
+        <div style="height:12px"></div>
+        <label>ORDINAMENTO</label>
+        <div class="row">
+          <select id="orderSelect">
+            <option value="random">Ordine casuale</option>
+            <option value="alpha_global">Ordine alfabetico globale</option>
+            <option value="alpha_cat">Ordine alfabetico categoria per categoria</option>
+            <option value="difficulty">Ordine di difficoltà</option>
+          </select>
+          <label class="chk" style="margin-left:8px"><input id="descCheckbox" type="checkbox" /> Decrescente</label>
+        </div>
+
+        <div style="height:12px"></div>
+        <div class="controls">
+          <button id="previewBtn" class="ghost">Anteprima conteggi</button>
+          <button id="exportBtn" class="primary">Esporta PDF</button>
+          <button id="startGameBtn" class="ghost">Apri sessione di gioco</button>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+            <label class="small">Totale Domande</label>
+            <input id="totalInput" type="number" min="1" value="25" />
           </div>
         </div>
 
-        <div>
-          <label>ORDINAMENTO</label>
-          <div style="display:flex; gap:8px; align-items:center; margin-left:6px">
-            <select id="orderSelect">
-              <option value="random">Ordine casuale</option>
-              <option value="alpha_global">Ordine alfabetico (tutte le categorie)</option>
-              <option value="alpha_cat">Ordine alfabetico (categoria per categoria)</option>
-              <option value="difficulty">Ordine di difficolt�</option>
-            </select>
-            <label style="margin-left:6px"><input id="descCheckbox" type="checkbox" /> Decrescente</label>
-          </div>
-        </div>
+        <div id="previewArea" class="footer-note"></div>
       </div>
 
-      <div style="margin-top:12px" class="row">
-        <button id="previewBtn">Anteprima conteggi</button>
-        <button id="exportBtn">Esporta file Word</button>
-        <button id="startGameBtn" class="secondary">Apri sessione di gioco</button>
+      <!-- Colonna destra: info e viewer -->
+      <div>
+        <div class="card">
+          <h3 style="margin-top:0;color:var(--giallo)">Istruzioni rapide</h3>
+          <ul class="small" style="color:#e9e2c6">
+            <li>Ogni foglio del file Excel è considerato una categoria.</li>
+            <li>Intestazioni richieste: <strong>ID, Tema, Domanda, Tipologia, Risposta A..F, Difficoltà, Data Creazione</strong>.</li>
+            <li>Per le risposte multiple usa le colonne A..F; la risposta corretta può essere marcata con <strong>###</strong> nella cella corrispondente.</li>
+            <li>Salva il file in UTF‑8 per evitare problemi con gli accenti.</li>
+          </ul>
+        </div>
 
-        <div style="margin-left:auto; display:flex; align-items:center; gap:8px">
-          <label>Totale Domande</label>
-          <input id="totalInput" type="number" min="1" value="25" style="width:90px" />
+        <div class="card" style="margin-top:12px">
+          <h3 style="margin:0;color:var(--giallo)">Anteprima / Sessione di gioco</h3>
+          <div class="small" style="margin-top:8px;color:#e9e2c6">Dopo l'esportazione il viewer si aprirà automaticamente con le domande selezionate.</div>
+          <div style="height:12px"></div>
+          <div class="small" id="statusArea">Nessun file caricato</div>
         </div>
       </div>
-
-      <div id="previewArea" style="margin-top:12px"></div>
     </div>
   </div>
 
+  <!-- Viewer -->
   <div id="viewer">
     <div id="slide">
       <div id="slideContent"></div>
-      <div class="controls">
-        <button id="prevQ">Indietro</button>
-        <button id="nextQ">Avanti</button>
-        <button id="fsBtn">Schermo intero</button>
-        <button id="closeViewer" class="secondary">Chiudi</button>
+      <div class="viewer-controls">
+        <button id="prevQ" class="ghost">Indietro</button>
+        <button id="nextQ" class="ghost">Avanti</button>
+        <button id="fsBtn" class="ghost">Schermo intero</button>
+        <button id="closeViewer" class="ghost">Chiudi</button>
       </div>
     </div>
   </div>
 
 <script>
-/* ---------- Stato ---------- */
+/* ---------- Stato e helper ---------- */
 let workbookData = {}; // { sheetName: [rows] }
 let allTypes = ['4 Risposte','6 Risposte','Vero/Falso','Frase interrotta a 2 risposte','Continua la risposta','Risposta aperta'];
 let selectedQuestions = [];
 let allCategories = [];
 
-/* ---------- Utility ---------- */
-function parseRowObject(row, headers) {
-  const obj = {};
-  headers.forEach((h, i) => obj[h] = row[i] ?? "");
-  return obj;
-}
-function shuffleArray(a) {
-  for (let i=a.length-1;i>0;i--) {
-    const j = Math.floor(Math.random()*(i+1));
-    [a[i],a[j]] = [a[j],a[i]];
-  }
-}
+function norm(s){ return (s||'').toString().trim().toLowerCase(); }
+function normalizeStars(s){ if(!s) return ''; return s.replace(/[\u2605\u2B50★☆✶✷✸✹✺✻✼✽✾✿]/g,'⭐').trim(); }
+function countStars(s){ return (normalizeStars(s).match(/⭐/g)||[]).length; }
+function escapeHtml(s){ if(!s) return ''; return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
+function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
 
 /* ---------- Caricamento Excel ---------- */
 document.getElementById('loadBtn').addEventListener('click', () => {
   const f = document.getElementById('fileInput').files[0];
-  if (!f) return alert('Seleziona un file Excel');
+  if(!f) return alert('Seleziona un file Excel');
   const reader = new FileReader();
   reader.onload = (e) => {
     const data = new Uint8Array(e.target.result);
     const wb = XLSX.read(data, {type:'array'});
-    workbookData = {};
-    allCategories = [];
+    workbookData = {}; allCategories = [];
     wb.SheetNames.forEach(name => {
       const ws = wb.Sheets[name];
       const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:""});
-      if (json.length < 2) return;
+      if(json.length < 2) return;
       const headers = json[0].map(h => String(h).trim());
-      const rows = json.slice(1).map(r => parseRowObject(r, headers));
-      // mappa colonne esatte: ID, Tema, Domanda, Tipologia, Risposta A..F, Difficolt�, Data Creazione
+      const rows = json.slice(1).map(r => {
+        const obj = {};
+        headers.forEach((h,i)=> obj[h] = r[i] ?? "");
+        return obj;
+      });
       const normalized = rows.map(r => {
-        const norm = {};
-        norm.ID = r['ID'] || r['Id'] || r['id'] || "";
-        norm.Tema = r['Tema'] || r['tema'] || name;
-        norm.Domanda = r['Domanda'] || r['Question'] || r['Domanda?'] || "";
-        norm.Tipologia = r['Tipologia'] || r['Type'] || "";
-        norm.RispostaA = r['Risposta A'] || r['RispostaA'] || r['A'] || "";
-        norm.RispostaB = r['Risposta B'] || r['RispostaB'] || r['B'] || "";
-        norm.RispostaC = r['Risposta C'] || r['RispostaC'] || r['C'] || "";
-        norm.RispostaD = r['Risposta D'] || r['RispostaD'] || r['D'] || "";
-        norm.RispostaE = r['Risposta E'] || r['RispostaE'] || r['E'] || "";
-        norm.RispostaF = r['Risposta F'] || r['RispostaF'] || r['F'] || "";
-        norm.Difficolta = r['Difficolt�'] || r['Difficolta'] || r['Difficulty'] || "";
-        norm.Data = r['Data Creazione'] || r['Data'] || r['Date'] || "";
-        return norm;
+        return {
+          ID: r['ID'] || r['Id'] || r['id'] || '',
+          Tema: r['Tema'] || r['tema'] || name,
+          Domanda: r['Domanda'] || r['Question'] || '',
+          Tipologia: r['Tipologia'] || r['Type'] || '',
+          RispostaA: r['Risposta A'] || r['RispostaA'] || r['A'] || '',
+          RispostaB: r['Risposta B'] || r['RispostaB'] || r['B'] || '',
+          RispostaC: r['Risposta C'] || r['RispostaC'] || r['C'] || '',
+          RispostaD: r['Risposta D'] || r['RispostaD'] || r['D'] || '',
+          RispostaE: r['Risposta E'] || r['RispostaE'] || r['E'] || '',
+          RispostaF: r['Risposta F'] || r['RispostaF'] || r['F'] || '',
+          Difficolta: r['Difficoltà'] || r['Difficolta'] || r['Difficulty'] || '',
+          Data: r['Data Creazione'] || r['Data'] || r['Date'] || ''
+        };
       });
       workbookData[name] = normalized;
       allCategories.push(name);
     });
     buildFiltersUI();
-    document.getElementById('metaArea').style.display = 'block';
+    document.getElementById('metaArea')?.style?.display = 'block';
+    document.getElementById('statusArea').innerText = `File caricato: ${Object.keys(workbookData).length} fogli`;
     alert('File caricato. Fogli trovati: ' + Object.keys(workbookData).length);
   };
   reader.readAsArrayBuffer(f);
 });
 
-/* ---------- Costruzione UI filtri ---------- */
-document.getElementById('toggleAllCats').addEventListener('change', (e) => {
-	const v = e.target.checked;
-	document.querySelectorAll('.catChk').forEach(cb => cb.checked = v);
-});
-
-function buildFiltersUI() {
+/* ---------- UI filtri dinamici ---------- */
+function buildFiltersUI(){
   const typesArea = document.getElementById('typesArea');
   const catsArea = document.getElementById('catsArea');
-
   typesArea.innerHTML = ''; catsArea.innerHTML = '';
-  // Tipologie: checkbox (ordine fisso)
   allTypes.forEach(t => {
     const div = document.createElement('div');
-    div.innerHTML = `<label><input type="checkbox" data-type="${t}" class="typeChk" checked /> ${t}</label>`;
+    div.innerHTML = `<label class="chk"><input type="checkbox" data-type="${t}" class="typeChk" checked /> ${t}</label>`;
     typesArea.appendChild(div);
   });
-  // Categorie: checkbox per ogni sheet
   allCategories.forEach(c => {
     const div = document.createElement('div');
-    div.innerHTML = `<label><input type="checkbox" data-cat="${c}" class="catChk" checked /> ${c}</label>`;
+    div.innerHTML = `<label class="chk"><input type="checkbox" data-cat="${c}" class="catChk" checked /> ${c}</label>`;
     catsArea.appendChild(div);
   });
+  // toggleAll initial state
+  const allChecked = Array.from(document.querySelectorAll('.catChk')).every(cb=>cb.checked);
+  document.getElementById('toggleAllCats').checked = allChecked;
 }
 
-/* ---------- Preset categorie (.txt) ---------- */
+/* ---------- Preset import/export ---------- */
 document.getElementById('applyPresetBtn').addEventListener('click', () => {
   const f = document.getElementById('presetInput').files[0];
-  if (!f) return alert('Seleziona un file preset (.txt)');
+  if(!f) return alert('Seleziona un file preset (.txt)');
   const reader = new FileReader();
   reader.onload = (e) => {
-    const txt = e.target.result;
-    const lines = txt.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-    // deseleziona tutte
+    const lines = e.target.result.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
     document.querySelectorAll('.catChk').forEach(cb => cb.checked = false);
-    // seleziona quelle che matchano (case-insensitive)
     lines.forEach(l => {
       document.querySelectorAll('.catChk').forEach(cb => {
-        if (cb.dataset.cat.toLowerCase() === l.toLowerCase()) cb.checked = true;
+        if(cb.dataset.cat === l) cb.checked = true;
       });
     });
     alert('Preset applicato');
@@ -224,62 +253,55 @@ document.getElementById('applyPresetBtn').addEventListener('click', () => {
 
 document.getElementById('exportPresetBtn').addEventListener('click', () => {
   const selected = Array.from(document.querySelectorAll('.catChk')).filter(cb=>cb.checked).map(cb=>cb.dataset.cat);
-  if (selected.length === 0) return alert('Nessuna categoria selezionata da esportare');
-  const txt = selected.join('\n');
-  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  if(selected.length === 0) return alert('Nessuna categoria selezionata');
+  const blob = new Blob([selected.join('\n')], {type:'text/plain;charset=utf-8'});
   saveAs(blob, `preset_categorie_${Date.now()}.txt`);
 });
 
+/* ---------- Select/Deselect tutte le categorie ---------- */
+document.getElementById('toggleAllCats').addEventListener('change', (e) => {
+  const v = e.target.checked;
+  document.querySelectorAll('.catChk').forEach(cb => cb.checked = v);
+});
 
-/* ---------- Filtri selezionati ---------- */
-function getSelectedFilters() {
-  // tipologie selezionate -> calcola % dietro le quinte
+/* ---------- Filtri lettura ---------- */
+function getSelectedFilters(){
   const typeChecks = Array.from(document.querySelectorAll('.typeChk')).filter(i=>i.checked).map(i=>i.dataset.type);
-  if (typeChecks.length === 0) throw new Error('Seleziona almeno una tipologia');
-  const typePct = {};
-  typeChecks.forEach(t => typePct[t] = 1 / typeChecks.length); // percentuale implicita
+  if(typeChecks.length === 0) throw new Error('Seleziona almeno una tipologia');
+  const typePct = {}; typeChecks.forEach(t=>typePct[t]=1/typeChecks.length);
 
-  // categorie selezionate
-  const selectedCats = Array.from(document.querySelectorAll('.catChk')).filter(cb => cb.checked).map(cb => cb.dataset.cat);
-  if (selectedCats.length === 0) throw new Error('Seleziona almeno una categoria');
+  const selectedCats = Array.from(document.querySelectorAll('.catChk')).filter(cb=>cb.checked).map(cb=>cb.dataset.cat);
+  if(selectedCats.length === 0) throw new Error('Seleziona almeno una categoria');
 
-  // difficolt�: multi-select; if 'all' checked, ignore others
   const allDiff = document.getElementById('diff_all').checked;
   const diffChecks = Array.from(document.querySelectorAll('.diffChk')).filter(i=>i.checked).map(i=>i.dataset.diff);
   const diffs = allDiff ? ['all'] : (diffChecks.length ? diffChecks : ['all']);
 
-  // ordinamento
   const order = document.getElementById('orderSelect').value;
   const desc = document.getElementById('descCheckbox').checked;
-
-  // totale
   const totalN = Math.max(1, parseInt(document.getElementById('totalInput').value || 0));
 
   return { typePct, typeChecks, selectedCats, diffs, order, desc, totalN };
 }
 
-/* ---------- Costruzione pool e filtri ---------- */
-function filterPoolByDifficulty(pool, diffs) {
-	if (diffs.includes('all'))
-		return pool;
-	// diffs contiene simboli come '⭐','⭐⭐', ecc. Normalizziamo e confrontiamo per conteggio stelle
-	const wantedCounts = diffs.map(d => countStars(d));
-	return pool.filter(q => {
-		const qStars = countStars(q.Difficolta || "");
-		return wantedCounts.includes(qStars);
-	});
+/* ---------- Pool e filtri ---------- */
+function filterPoolByDifficulty(pool, diffs){
+  if(diffs.includes('all')) return pool;
+  const wantedCounts = diffs.map(d => countStars(d));
+  return pool.filter(q => {
+    const qStars = countStars(q.Difficolta || "");
+    return wantedCounts.includes(qStars);
+  });
 }
 
-function buildPool(selectedCats, diffs) {
+function buildPool(selectedCats, diffs){
   let pool = [];
   selectedCats.forEach(cat => {
     const arr = workbookData[cat] || [];
-    // normalizziamo tipologia e category al volo
     const filtered = filterPoolByDifficulty(arr, diffs);
     filtered.forEach(q => {
       const copy = Object.assign({}, q);
       copy._category = cat;
-      // normalizza campi utili per matching
       copy._normTipologia = norm(copy.Tipologia);
       copy._normCategory = norm(copy._category);
       pool.push(copy);
@@ -288,38 +310,17 @@ function buildPool(selectedCats, diffs) {
   return pool;
 }
 
-// Normalizzazione testo: trim, lowercase 
-	function norm(s) {
-	return (s || "").toString().trim().toLowerCase();
-}
-
-// Normalizza vari simboli di stella in un unico carattere '⭐'
-function normalizeStars(s) {
-	if (!s)
-	return "";
-	// alcuni possibili codici: U+2B50 (⭐), U+2605 (★), emoji variazioni
-	return s.replace(/[\u2605\u2B50★☆✶✷✸✹✺✻✼✽✾✿]/g, '⭐').trim();
-}
-
-// Conta stelle (ritorna numero di '⭐')
-function countStars(s) {
-	return (normalizeStars(s).match(/⭐/g) || []).length;
-}
-
 /* ---------- Allocazione e sampling ---------- */
-function allocateCounts(N, typePct, typeChecks, selectedCats, pool) {
-  // target per tipo (come prima)
+function allocateCounts(N, typePct, typeChecks, selectedCats, pool){
   const targetType = {};
   typeChecks.forEach(t => targetType[t] = Math.round(N * (typePct[t] || 0)));
-  // adjust sum
   let sum = Object.values(targetType).reduce((a,b)=>a+b,0);
-  while (sum !== N) {
+  while(sum !== N){
     const diff = N - sum;
     const key = typeChecks[Math.abs(diff) % typeChecks.length];
     targetType[key] += Math.sign(diff);
     sum = Object.values(targetType).reduce((a,b)=>a+b,0);
   }
-
   const perCellTargets = {};
   typeChecks.forEach(t => {
     perCellTargets[t] = {};
@@ -331,15 +332,12 @@ function allocateCounts(N, typePct, typeChecks, selectedCats, pool) {
       countsByCat[c] = poolType.filter(q => q._normCategory === cNorm).length;
     });
     const totalAvailable = Object.values(countsByCat).reduce((a,b)=>a+b,0);
-    if (totalAvailable === 0) {
+    if(totalAvailable === 0){
       selectedCats.forEach(c => perCellTargets[t][c] = 0);
     } else {
-      selectedCats.forEach(c => {
-        perCellTargets[t][c] = Math.round(targetType[t] * (countsByCat[c] / totalAvailable));
-      });
-      // adjust
+      selectedCats.forEach(c => perCellTargets[t][c] = Math.round(targetType[t] * (countsByCat[c] / totalAvailable)));
       let s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
-      while (s !== targetType[t]) {
+      while(s !== targetType[t]){
         const diff = targetType[t] - s;
         const cat = selectedCats[Math.abs(diff) % selectedCats.length];
         perCellTargets[t][cat] += Math.sign(diff);
@@ -350,14 +348,13 @@ function allocateCounts(N, typePct, typeChecks, selectedCats, pool) {
   return { targetType, perCellTargets };
 }
 
-function sampleQuestions(perCellTargets, pool) {
-  const chosen = [];
-  const usedIDs = new Set();
-  for (const t of Object.keys(perCellTargets)) {
+function sampleQuestions(perCellTargets, pool){
+  const chosen = []; const usedIDs = new Set();
+  for(const t of Object.keys(perCellTargets)){
     const tNorm = norm(t);
-    for (const c of Object.keys(perCellTargets[t])) {
+    for(const c of Object.keys(perCellTargets[t])){
       const need = perCellTargets[t][c];
-      if (need <= 0) continue;
+      if(need <= 0) continue;
       const cNorm = norm(c);
       const candidates = pool.filter(q => q._normTipologia === tNorm && q._normCategory === cNorm && !usedIDs.has(q.ID));
       shuffleArray(candidates);
@@ -368,9 +365,9 @@ function sampleQuestions(perCellTargets, pool) {
   return { chosen, usedIDs };
 }
 
-function fillRemaining(N, chosen, pool, usedIDs) {
+function fillRemaining(N, chosen, pool, usedIDs){
   let remaining = N - chosen.length;
-  if (remaining <= 0) return chosen;
+  if(remaining <= 0) return chosen;
   const candidates = pool.filter(q => !usedIDs.has(q.ID));
   shuffleArray(candidates);
   const take = candidates.slice(0, remaining);
@@ -384,150 +381,134 @@ document.getElementById('previewBtn').addEventListener('click', () => {
     const cfg = getSelectedFilters();
     const pool = buildPool(cfg.selectedCats, cfg.diffs);
     const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
-    const preview = document.getElementById('previewArea');
-    preview.innerHTML = `<div class="box"><strong>Pool totale disponibile:</strong> ${pool.length} domande<br>
-      <strong>Target per tipologia:</strong> ${JSON.stringify(alloc.targetType)}<br>
-      <strong>Target per cella (tipo x categoria):</strong><pre>${JSON.stringify(alloc.perCellTargets,null,2)}</pre></div>`;
-  } catch (err) {
+    document.getElementById('previewArea').innerHTML = `
+      Pool totale disponibile: <strong>${pool.length}</strong><br>
+      Target per tipologia: <pre style="color:#e9e2c6">${JSON.stringify(alloc.targetType,null,2)}</pre>
+      Target per cella (tipo x categoria): <pre style="color:#e9e2c6">${JSON.stringify(alloc.perCellTargets,null,2)}</pre>
+    `;
+  } catch(err){
     alert(err.message);
   }
 });
 
-/* ---------- Esportazione e apertura sessione di gioco ---------- */
+/* ---------- Export PDF e apertura viewer ---------- */
 document.getElementById('exportBtn').addEventListener('click', async () => {
   try {
     const cfg = getSelectedFilters();
     const pool = buildPool(cfg.selectedCats, cfg.diffs);
-    if (pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
+    if(pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
     const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
     let { chosen, usedIDs } = sampleQuestions(alloc.perCellTargets, pool);
     chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
 
     // ordering
-    if (cfg.order === 'random') shuffleArray(chosen);
-    else if (cfg.order === 'alpha_global') chosen.sort((a,b)=> (a.Domanda||'').localeCompare(b.Domanda||''));
-    else if (cfg.order === 'alpha_cat') chosen.sort((a,b)=> {
-      if (a._category !== b._category) return a._category.localeCompare(b._category);
-      return (a.Domanda||'').localeCompare(b.Domanda||'');
-    });
-    else if (cfg.order === 'difficulty') chosen.sort((a,b)=> (a.Difficolta||'').length - (b.Difficolta||'').length);
-    if (cfg.desc) chosen.reverse();
+    if(cfg.order === 'random') shuffleArray(chosen);
+    else if(cfg.order === 'alpha_global') chosen.sort((a,b)=> (a.Domanda||'').localeCompare(b.Domanda||''));
+    else if(cfg.order === 'alpha_cat') chosen.sort((a,b)=> a._category !== b._category ? a._category.localeCompare(b._category) : (a.Domanda||'').localeCompare(b.Domanda||''));
+    else if(cfg.order === 'difficulty') chosen.sort((a,b)=> countStars(a.Difficolta||'') - countStars(b.Difficolta||''));
+    if(cfg.desc) chosen.reverse();
 
     selectedQuestions = chosen.slice(0, cfg.totalN);
 
-    if (typeof docx === 'undefined') {
-	  alert('Errore: libreria docx non caricata. Controlla che lo script docx sia raggiungibile.');
-	  return;
-	}
-	await generateDocx(selectedQuestions, cfg);
+    await generatePdf(selectedQuestions, cfg);
     openViewer(selectedQuestions);
-  } catch (err) {
+  } catch(err){
     alert(err.message);
   }
 });
 
-/* ---------- Generazione .docx (docx library) ---------- */
-async function generateDocx(questions, cfg) {
-  const { Document, Packer, Paragraph, TextRun, HeadingLevel } = docx;
-  const doc = new Document({
-    sections: [{
-      properties: {},
-      children: [
-        new Paragraph({ text: "Quiz esportato", heading: HeadingLevel.TITLE }),
-        new Paragraph({ text: `Totale domande: ${questions.length}` }),
-        new Paragraph({ text: `Filtri: Difficolt�=${cfg.diffs.join(',')}, Ordinamento=${cfg.order}, Decrescente=${cfg.desc}` }),
-        new Paragraph({ text: " " })
-      ]
-    }]
-  });
+/* ---------- Genera PDF con html2pdf ---------- */
+async function generatePdf(questions, cfg){
+  const container = document.createElement('div');
+  container.style.width = '1200px';
+  container.style.padding = '24px';
+  container.style.fontFamily = 'Arial, Helvetica, sans-serif';
+  container.style.color = '#111';
+  container.style.background = '#fff';
 
-  const body = doc.sections[0].children;
+  const header = document.createElement('div');
+  header.innerHTML = `<h1 style="margin:0;color:${'#120E01'}">Quiz esportato</h1>
+    <div style="margin-top:6px">Totale domande: <strong>${questions.length}</strong></div>
+    <div style="margin-top:6px">Filtri: Difficoltà=${cfg.diffs.join(',')}, Ordinamento=${cfg.order}, Decrescente=${cfg.desc}</div>
+    <hr style="margin:12px 0">`;
+  container.appendChild(header);
+
   questions.forEach((q, idx) => {
-    const qText = `${idx+1}. ${q.Domanda}`;
-    body.push(new Paragraph({ text: qText, spacing: { after: 200 } }));
-    // risposte da colonne A..F
+    const qDiv = document.createElement('div');
+    qDiv.style.marginBottom = '12px';
+    qDiv.innerHTML = `<div style="font-weight:700">${idx+1}. ${escapeHtml(q.Domanda)}</div>`;
     const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
-    if (answers.length > 0) {
-      answers.forEach((a, i) => {
-        body.push(new Paragraph({ text: `   ${String.fromCharCode(65+i)}) ${a}` }));
+    if(answers.length){
+      answers.forEach((a,i) => {
+        const p = document.createElement('div');
+        p.style.marginLeft = '12px';
+        p.innerHTML = `<strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(a)}`;
+        qDiv.appendChild(p);
       });
     } else {
-      body.push(new Paragraph({ text: "   [Risposta aperta]" }));
+      const p = document.createElement('div'); p.style.marginLeft='12px'; p.innerHTML = `<em>Risposta aperta</em>`; qDiv.appendChild(p);
     }
-    body.push(new Paragraph({ text: " " }));
+    const meta = document.createElement('div'); meta.style.marginTop='6px'; meta.style.color='#666'; meta.style.fontSize='12px';
+    meta.innerText = `Categoria: ${q._category} • Tipologia: ${q.Tipologia} • Difficoltà: ${q.Difficolta}`;
+    qDiv.appendChild(meta);
+    container.appendChild(qDiv);
+    const hr = document.createElement('hr'); hr.style.margin='8px 0'; container.appendChild(hr);
   });
 
-  // appendice soluzioni: cerco se la risposta corretta � marcata con ### all'interno delle risposte (se presente)
-  body.push(new Paragraph({ text: "Appendice soluzioni", heading: HeadingLevel.HEADING_2 }));
+  // appendice soluzioni
+  const solHeader = document.createElement('div'); solHeader.innerHTML = `<h2>Appendice soluzioni</h2>`; container.appendChild(solHeader);
   questions.forEach((q, idx) => {
-    // cerca '###' in risposte
     const answersRaw = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF];
     let sol = "[non specificata]";
-    for (let i=0;i<answersRaw.length;i++){
-      if ((answersRaw[i]||'').includes('###')) {
-        sol = String.fromCharCode(65+i);
-        break;
-      }
-    }
-    body.push(new Paragraph({ text: `${idx+1}. ${sol}` }));
+    for(let i=0;i<answersRaw.length;i++){ if((answersRaw[i]||'').includes('###')){ sol = String.fromCharCode(65+i); break; } }
+    const p = document.createElement('div'); p.style.marginBottom='6px'; p.innerText = `${idx+1}. ${sol}`; container.appendChild(p);
   });
 
-  const packer = new Packer();
-  const blob = await packer.toBlob(doc);
-  saveAs(blob, `quiz_export_${Date.now()}.docx`);
+  container.style.position = 'fixed'; container.style.left = '-9999px';
+  document.body.appendChild(container);
+
+  const opt = { margin:10, filename:`quiz_export_${Date.now()}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'pt',format:'a4',orientation:'portrait'} };
+  try {
+    await html2pdf().set(opt).from(container).save();
+  } catch(err){
+    alert('Errore durante la generazione del PDF: ' + (err && err.message ? err.message : err));
+  } finally {
+    document.body.removeChild(container);
+  }
 }
 
-/* ---------- Viewer sessione di gioco ---------- */
+/* ---------- Viewer ---------- */
 let currentIndex = 0;
-function openViewer(questions) {
+function openViewer(questions){
   currentIndex = 0;
   document.getElementById('viewer').style.display = 'flex';
   renderSlide();
 }
-function renderSlide() {
+function renderSlide(){
   const container = document.getElementById('slideContent');
   const q = selectedQuestions[currentIndex];
   const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
-  container.innerHTML = `<h2>Domanda ${currentIndex+1} / ${selectedQuestions.length}</h2>
-    <h3>${escapeHtml(q.Domanda)}</h3>
-    <div style="margin-top:12px">${answers.length ? answers.map((a,i)=>`<div style="margin:6px 0"><strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(a)}</div>`).join('') : '<em>Risposta aperta</em>'}</div>
-    <div style="margin-top:12px; color:#666">Categoria: ${escapeHtml(q._category)} � Tipologia: ${escapeHtml(q.Tipologia)} � Difficolt�: ${escapeHtml(q.Difficolta)}</div>`;
+  container.innerHTML = `<h2 style="margin:0 0 8px 0">Domanda ${currentIndex+1} / ${selectedQuestions.length}</h2>
+    <h3 style="margin:0 0 12px 0">${escapeHtml(q.Domanda)}</h3>
+    <div>${answers.length ? answers.map((a,i)=>`<div style="margin:6px 0"><strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(a)}</div>`).join('') : '<em>Risposta aperta</em>'}</div>
+    <div style="margin-top:12px;color:#666">Categoria: ${escapeHtml(q._category)} • Tipologia: ${escapeHtml(q.Tipologia)} • Difficoltà: ${escapeHtml(q.Difficolta)}</div>`;
 }
-document.getElementById('nextQ').addEventListener('click', ()=> {
-  if (currentIndex < selectedQuestions.length-1) currentIndex++;
-  renderSlide();
-});
-document.getElementById('prevQ').addEventListener('click', ()=> {
-  if (currentIndex > 0) currentIndex--;
-  renderSlide();
-});
-document.getElementById('closeViewer').addEventListener('click', ()=> {
-  document.getElementById('viewer').style.display = 'none';
-});
-document.getElementById('fsBtn').addEventListener('click', ()=> {
-  const el = document.getElementById('slide');
-  if (el.requestFullscreen) el.requestFullscreen();
-});
+document.getElementById('nextQ').addEventListener('click', ()=>{ if(currentIndex < selectedQuestions.length-1) currentIndex++; renderSlide(); });
+document.getElementById('prevQ').addEventListener('click', ()=>{ if(currentIndex > 0) currentIndex--; renderSlide(); });
+document.getElementById('closeViewer').addEventListener('click', ()=>{ document.getElementById('viewer').style.display='none'; });
+document.getElementById('fsBtn').addEventListener('click', ()=>{ const el=document.getElementById('slide'); if(el.requestFullscreen) el.requestFullscreen(); });
 
 /* ---------- Apri sessione senza esportare ---------- */
 document.getElementById('startGameBtn').addEventListener('click', () => {
   try {
     const cfg = getSelectedFilters();
     const pool = buildPool(cfg.selectedCats, cfg.diffs);
-    if (pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
+    if(pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
     shuffleArray(pool);
     selectedQuestions = pool.slice(0, cfg.totalN);
     openViewer(selectedQuestions);
-  } catch (err) {
-    alert(err.message);
-  }
+  } catch(err){ alert(err.message); }
 });
-
-/* ---------- Helpers ---------- */
-function escapeHtml(s) {
-  if (!s) return '';
-  return s.replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; });
-}
 </script>
 </body>
 </html>
