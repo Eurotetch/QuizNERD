@@ -63,9 +63,9 @@
     input[type="file"]{color:var(--bianco)}
     input[type="number"]{width:100px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:var(--bianco)}
     select, button{padding:8px 10px;border-radius:8px;border:none}
-    button.primary{background:var(--giallo);color:var(--nero);font-weight:700}
+    button.primary{background:var(--giallo);color:var(--nero);font-weight:700;cursor:pointer;}
     button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--bianco);cursor:pointer;}
-	button.ghost:hover{color:rgba(255,255,255,0.03);background:var(--bianco)}
+	button.ghost:hover{color:#1b1408;background:var(--bianco)}
     .small{font-size:0.9rem;color:#d6cfa8}
     .controls{display:flex;gap:8px;align-items:center;}
     #previewArea{margin-top:12px;color:var(--bianco)}
@@ -437,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	  }
 	});
 
-	/* ---------- Export PDF e apertura viewer ---------- */
+	/* ---------- Export PDF ---------- */
 	document.getElementById('exportBtn').addEventListener('click', async () => {
 	  try {
 		const cfg = getSelectedFilters();
@@ -457,7 +457,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		selectedQuestions = chosen.slice(0, cfg.totalN);
 
 		await generatePdf(selectedQuestions, cfg);
-		openViewer(selectedQuestions);
 	  } catch(err){
 		alert(err.message);
 	  }
@@ -544,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.getElementById('closeViewer').addEventListener('click', ()=>{ document.getElementById('viewer').style.display='none'; });
 	document.getElementById('fsBtn').addEventListener('click', ()=>{ const el=document.getElementById('slide'); if(el.requestFullscreen) el.requestFullscreen(); });
 
-	/* ---------- Apri sessione senza esportare ---------- */
+	/* ---------- Apri sessione Gioco ---------- */
 	document.getElementById('startGameBtn').addEventListener('click', () => {
 	  try {
 		const cfg = getSelectedFilters();
