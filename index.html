@@ -487,6 +487,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		  answers.forEach((a,i) => {
 			const p = document.createElement('div');
 			p.style.marginLeft = '12px';
+			if (p.innerHTML.includes("###"))
+			{
+				p.innerText = p.innerText.replace("###", "");
+				p.classList.add("real-answer");
+				p.setAttribute("style","background-color:green").setAttribute("color","white").setAttribute("display","table");
+			}
 			p.innerHTML = `<strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(a)}`;
 			qDiv.appendChild(p);
 		  });
