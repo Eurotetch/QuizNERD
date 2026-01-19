@@ -69,6 +69,7 @@
     .small{font-size:0.9rem;color:#d6cfa8}
     .controls{display:flex;gap:8px;align-items:center;}
     #previewArea{margin-top:12px;color:var(--bianco)}
+	.real-answer {color:var(--bianco);background-color:#691258;display:table;}
     /* viewer */
     #viewer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:9999}
     #slide{background:var(--bianco);color:var(--nero);width:88%;height:86%;border-radius:10px;padding:28px;overflow:auto}
@@ -142,7 +143,7 @@
 		<div class="card" style="margin-top:12px;max-width: 389px;flex-wrap: wrap;">          
 			<label>DIFFICOLTÀ</label>
 			<div class="row">
-			  <label class="chk"><input id="diff_all" type="checkbox" /> Tutte le difficoltà</label>
+			  <label class="chk"><input id="diff_all" type="checkbox" checked /> Tutte le difficoltà</label>
 			  <label class="chk"><input class="diffChk" data-diff="⭐" type="checkbox" /> Facili ★</label>
 			  <label class="chk"><input class="diffChk" data-diff="⭐⭐" type="checkbox" /> Medie ★★</label>
 			  <label class="chk"><input class="diffChk" data-diff="⭐⭐⭐" type="checkbox" /> Difficili ★★★</label>
@@ -491,7 +492,6 @@ document.addEventListener('DOMContentLoaded', () => {
 			{
 				p.innerText = p.innerText.replace("###", "");
 				p.classList.add("real-answer");
-				p.setAttribute("style","background-color:green").setAttribute("color","white").setAttribute("display","table");
 			}
 			p.innerHTML = `<strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(a)}`;
 			qDiv.appendChild(p);
@@ -516,7 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	  });
 
 	  document.getElementsByClassName("preview-container").innerHTML = "";
-	  document.getElementsByClassName("preview-container").prepend(container);
+	  document.getElementsByClassName("preview-container").appendChild(container);
 
 	  const opt = { margin:10, filename:`quiz_export_${Date.now()}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'pt',format:'a4',orientation:'portrait'} };
 	  try {
