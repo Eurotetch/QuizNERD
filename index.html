@@ -25,8 +25,8 @@
 
   <!-- Librerie -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/docx@7.2.0/build/index.umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@7.2.0/build/index.umd.js"></script>
 </head>
 <body>
   <h1>Configurator Quiz NERD</h1>
@@ -49,11 +49,13 @@
 
         <div>
           <label>CATEGORIE (foglio = categoria)</label>
+		  <label><input id="toggleAllCats" type="checkbox" /> Seleziona/Deseleziona tutte</label>
           <div class="list" id="catsArea"></div>
           <div style="margin-top:8px">
             <label>Carica preset categorie (file .txt, una categoria per riga)</label>
             <input id="presetInput" type="file" accept=".txt" />
             <button id="applyPresetBtn" class="secondary">Applica preset</button>
+			<button id="exportPresetBtn" class="secondary">Esporta preset</button>
           </div>
         </div>
       </div>
@@ -175,9 +177,15 @@ document.getElementById('loadBtn').addEventListener('click', () => {
 });
 
 /* ---------- Costruzione UI filtri ---------- */
+document.getElementById('toggleAllCats').addEventListener('change', (e) => {
+	const v = e.target.checked;
+	document.querySelectorAll('.catChk').forEach(cb => cb.checked = v);
+});
+
 function buildFiltersUI() {
   const typesArea = document.getElementById('typesArea');
   const catsArea = document.getElementById('catsArea');
+
   typesArea.innerHTML = ''; catsArea.innerHTML = '';
   // Tipologie: checkbox (ordine fisso)
   allTypes.forEach(t => {
@@ -214,6 +222,15 @@ document.getElementById('applyPresetBtn').addEventListener('click', () => {
   reader.readAsText(f, 'utf-8');
 });
 
+document.getElementById('exportPresetBtn').addEventListener('click', () => {
+  const selected = Array.from(document.querySelectorAll('.catChk')).filter(cb=>cb.checked).map(cb=>cb.dataset.cat);
+  if (selected.length === 0) return alert('Nessuna categoria selezionata da esportare');
+  const txt = selected.join('\n');
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  saveAs(blob, `preset_categorie_${Date.now()}.txt`);
+});
+
+
 /* ---------- Filtri selezionati ---------- */
 function getSelectedFilters() {
   // tipologie selezionate -> calcola % dietro le quinte
@@ -243,30 +260,58 @@ function getSelectedFilters() {
 
 /* ---------- Costruzione pool e filtri ---------- */
 function filterPoolByDifficulty(pool, diffs) {
-  if (diffs.includes('all')) return pool;
-  return pool.filter(q => diffs.some(d => (q.Difficolta||'').includes(d)));
+	if (diffs.includes('all'))
+		return pool;
+	// diffs contiene simboli come '⭐','⭐⭐', ecc. Normalizziamo e confrontiamo per conteggio stelle
+	const wantedCounts = diffs.map(d => countStars(d));
+	return pool.filter(q => {
+		const qStars = countStars(q.Difficolta || "");
+		return wantedCounts.includes(qStars);
+	});
 }
 
 function buildPool(selectedCats, diffs) {
   let pool = [];
   selectedCats.forEach(cat => {
     const arr = workbookData[cat] || [];
+    // normalizziamo tipologia e category al volo
     const filtered = filterPoolByDifficulty(arr, diffs);
     filtered.forEach(q => {
       const copy = Object.assign({}, q);
       copy._category = cat;
+      // normalizza campi utili per matching
+      copy._normTipologia = norm(copy.Tipologia);
+      copy._normCategory = norm(copy._category);
       pool.push(copy);
     });
   });
   return pool;
 }
 
+// Normalizzazione testo: trim, lowercase 
+	function norm(s) {
+	return (s || "").toString().trim().toLowerCase();
+}
+
+// Normalizza vari simboli di stella in un unico carattere '⭐'
+function normalizeStars(s) {
+	if (!s)
+	return "";
+	// alcuni possibili codici: U+2B50 (⭐), U+2605 (★), emoji variazioni
+	return s.replace(/[\u2605\u2B50★☆✶✷✸✹✺✻✼✽✾✿]/g, '⭐').trim();
+}
+
+// Conta stelle (ritorna numero di '⭐')
+function countStars(s) {
+	return (normalizeStars(s).match(/⭐/g) || []).length;
+}
+
 /* ---------- Allocazione e sampling ---------- */
 function allocateCounts(N, typePct, typeChecks, selectedCats, pool) {
-  // target per tipo
+  // target per tipo (come prima)
   const targetType = {};
   typeChecks.forEach(t => targetType[t] = Math.round(N * (typePct[t] || 0)));
-  // adjust to sum N
+  // adjust sum
   let sum = Object.values(targetType).reduce((a,b)=>a+b,0);
   while (sum !== N) {
     const diff = N - sum;
@@ -274,13 +319,17 @@ function allocateCounts(N, typePct, typeChecks, selectedCats, pool) {
     targetType[key] += Math.sign(diff);
     sum = Object.values(targetType).reduce((a,b)=>a+b,0);
   }
-  // per cell (tipo x categoria) proportional to availability
+
   const perCellTargets = {};
   typeChecks.forEach(t => {
     perCellTargets[t] = {};
-    const poolType = pool.filter(q => (q.Tipologia||'').trim() === t);
+    const tNorm = norm(t);
+    const poolType = pool.filter(q => q._normTipologia === tNorm);
     const countsByCat = {};
-    selectedCats.forEach(c => countsByCat[c] = poolType.filter(q=>q._category===c).length);
+    selectedCats.forEach(c => {
+      const cNorm = norm(c);
+      countsByCat[c] = poolType.filter(q => q._normCategory === cNorm).length;
+    });
     const totalAvailable = Object.values(countsByCat).reduce((a,b)=>a+b,0);
     if (totalAvailable === 0) {
       selectedCats.forEach(c => perCellTargets[t][c] = 0);
@@ -288,7 +337,7 @@ function allocateCounts(N, typePct, typeChecks, selectedCats, pool) {
       selectedCats.forEach(c => {
         perCellTargets[t][c] = Math.round(targetType[t] * (countsByCat[c] / totalAvailable));
       });
-      // adjust to match targetType[t]
+      // adjust
       let s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
       while (s !== targetType[t]) {
         const diff = targetType[t] - s;
@@ -305,10 +354,12 @@ function sampleQuestions(perCellTargets, pool) {
   const chosen = [];
   const usedIDs = new Set();
   for (const t of Object.keys(perCellTargets)) {
+    const tNorm = norm(t);
     for (const c of Object.keys(perCellTargets[t])) {
       const need = perCellTargets[t][c];
       if (need <= 0) continue;
-      const candidates = pool.filter(q => (q.Tipologia||'').trim()===t && q._category===c && !usedIDs.has(q.ID));
+      const cNorm = norm(c);
+      const candidates = pool.filter(q => q._normTipologia === tNorm && q._normCategory === cNorm && !usedIDs.has(q.ID));
       shuffleArray(candidates);
       const take = candidates.slice(0, need);
       take.forEach(q => { chosen.push(q); usedIDs.add(q.ID); });
@@ -364,7 +415,11 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
 
     selectedQuestions = chosen.slice(0, cfg.totalN);
 
-    await generateDocx(selectedQuestions, cfg);
+    if (typeof docx === 'undefined') {
+	  alert('Errore: libreria docx non caricata. Controlla che lo script docx sia raggiungibile.');
+	  return;
+	}
+	await generateDocx(selectedQuestions, cfg);
     openViewer(selectedQuestions);
   } catch (err) {
     alert(err.message);
