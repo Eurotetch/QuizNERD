@@ -14,6 +14,40 @@
       --porpora:#691258;
       --card-bg: #fff;
     }
+	/* base box sizing e reset */
+	* { box-sizing: border-box; }
+
+	/* contenitori */
+	.container { max-width:1200px; margin:28px auto; padding:20px; }
+
+	/* lista scrollabile */
+	.list { max-height: 320px; overflow-y: auto; padding:8px; }
+
+	/* carte: evita overflow e margini interni */
+	.card { overflow: hidden; word-wrap: break-word; }
+
+	/* griglia responsive: usa minmax per evitare overflow orizzontale */
+	.grid {
+	  display: grid;
+	  grid-template-columns: minmax(280px, 360px) 1fr;
+	  gap: 18px;
+	}
+
+	/* per schermi piccoli */
+	@media (max-width: 980px) {
+	  .grid { grid-template-columns: 1fr; }
+	  .list { max-height: 220px; }
+	}
+
+	/* input e select: non farli uscire */
+	input[type="number"], select, input[type="file"] {
+	  max-width: 100%;
+	  min-width: 0;
+	}
+
+	/* assicura che i contenuti interni non escano */
+	.card .row { flex-wrap: wrap; }
+
     html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--nero) 0%, #1b1408 100%);color:var(--bianco);font-family:Inter, Arial, Helvetica, sans-serif}
     .container{max-width:1200px;margin:28px auto;padding:20px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;border:2px solid rgba(255,255,255,0.03)}
     header{display:flex;align-items:center;gap:16px}
@@ -167,347 +201,352 @@ function countStars(s){ return (normalizeStars(s).match(/⭐/g)||[]).length; }
 function escapeHtml(s){ if(!s) return ''; return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
 function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
 
-/* ---------- Caricamento Excel ---------- */
-document.getElementById('loadBtn').addEventListener('click', () => {
-  const f = document.getElementById('fileInput').files[0];
-  if(!f) return alert('Seleziona un file Excel');
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const data = new Uint8Array(e.target.result);
-    const wb = XLSX.read(data, {type:'array'});
-    workbookData = {}; allCategories = [];
-    wb.SheetNames.forEach(name => {
-      const ws = wb.Sheets[name];
-      const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:""});
-      if(json.length < 2) return;
-      const headers = json[0].map(h => String(h).trim());
-      const rows = json.slice(1).map(r => {
-        const obj = {};
-        headers.forEach((h,i)=> obj[h] = r[i] ?? "");
-        return obj;
-      });
-      const normalized = rows.map(r => {
-        return {
-          ID: r['ID'] || r['Id'] || r['id'] || '',
-          Tema: r['Tema'] || r['tema'] || name,
-          Domanda: r['Domanda'] || r['Question'] || '',
-          Tipologia: r['Tipologia'] || r['Type'] || '',
-          RispostaA: r['Risposta A'] || r['RispostaA'] || r['A'] || '',
-          RispostaB: r['Risposta B'] || r['RispostaB'] || r['B'] || '',
-          RispostaC: r['Risposta C'] || r['RispostaC'] || r['C'] || '',
-          RispostaD: r['Risposta D'] || r['RispostaD'] || r['D'] || '',
-          RispostaE: r['Risposta E'] || r['RispostaE'] || r['E'] || '',
-          RispostaF: r['Risposta F'] || r['RispostaF'] || r['F'] || '',
-          Difficolta: r['Difficoltà'] || r['Difficolta'] || r['Difficulty'] || '',
-          Data: r['Data Creazione'] || r['Data'] || r['Date'] || ''
-        };
-      });
-      workbookData[name] = normalized;
-      allCategories.push(name);
-    });
-    buildFiltersUI();
-    document.getElementById('metaArea')?.style?.display = 'block';
-    document.getElementById('statusArea').innerText = `File caricato: ${Object.keys(workbookData).length} fogli`;
-    alert('File caricato. Fogli trovati: ' + Object.keys(workbookData).length);
-  };
-  reader.readAsArrayBuffer(f);
-});
 
-/* ---------- UI filtri dinamici ---------- */
-function buildFiltersUI(){
-  const typesArea = document.getElementById('typesArea');
-  const catsArea = document.getElementById('catsArea');
-  typesArea.innerHTML = ''; catsArea.innerHTML = '';
-  allTypes.forEach(t => {
-    const div = document.createElement('div');
-    div.innerHTML = `<label class="chk"><input type="checkbox" data-type="${t}" class="typeChk" checked /> ${t}</label>`;
-    typesArea.appendChild(div);
-  });
-  allCategories.forEach(c => {
-    const div = document.createElement('div');
-    div.innerHTML = `<label class="chk"><input type="checkbox" data-cat="${c}" class="catChk" checked /> ${c}</label>`;
-    catsArea.appendChild(div);
-  });
-  // toggleAll initial state
-  const allChecked = Array.from(document.querySelectorAll('.catChk')).every(cb=>cb.checked);
-  document.getElementById('toggleAllCats').checked = allChecked;
-}
+document.addEventListener('DOMContentLoaded', () => {
+	/* ---------- Caricamento Excel ---------- */
+	document.getElementById('loadBtn').addEventListener('click', () => {
+	  const f = document.getElementById('fileInput').files[0];
+	  if(!f) return alert('Seleziona un file Excel');
+	  const reader = new FileReader();
+	  reader.onload = (e) => {
+		const data = new Uint8Array(e.target.result);
+		const wb = XLSX.read(data, {type:'array'});
+		workbookData = {}; allCategories = [];
+		wb.SheetNames.forEach(name => {
+		  const ws = wb.Sheets[name];
+		  const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:""});
+		  if(json.length < 2) return;
+		  const headers = json[0].map(h => String(h).trim());
+		  const rows = json.slice(1).map(r => {
+			const obj = {};
+			headers.forEach((h,i)=> obj[h] = r[i] ?? "");
+			return obj;
+		  });
+		  const normalized = rows.map(r => {
+			return {
+			  ID: r['ID'] || r['Id'] || r['id'] || '',
+			  Tema: r['Tema'] || r['tema'] || name,
+			  Domanda: r['Domanda'] || r['Question'] || '',
+			  Tipologia: r['Tipologia'] || r['Type'] || '',
+			  RispostaA: r['Risposta A'] || r['RispostaA'] || r['A'] || '',
+			  RispostaB: r['Risposta B'] || r['RispostaB'] || r['B'] || '',
+			  RispostaC: r['Risposta C'] || r['RispostaC'] || r['C'] || '',
+			  RispostaD: r['Risposta D'] || r['RispostaD'] || r['D'] || '',
+			  RispostaE: r['Risposta E'] || r['RispostaE'] || r['E'] || '',
+			  RispostaF: r['Risposta F'] || r['RispostaF'] || r['F'] || '',
+			  Difficolta: r['Difficoltà'] || r['Difficolta'] || r['Difficulty'] || '',
+			  Data: r['Data Creazione'] || r['Data'] || r['Date'] || ''
+			};
+		  });
+		  workbookData[name] = normalized;
+		  allCategories.push(name);
+		});
+		buildFiltersUI();
+		
+		const metaEl = document.getElementById('metaArea');
+		if (metaEl && metaEl.style) metaEl.style.display = 'block';
+		document.getElementById('statusArea').innerText = `File caricato: ${Object.keys(workbookData).length} fogli`;
+		alert('File caricato. Fogli trovati: ' + Object.keys(workbookData).length);
+	  };
+	  reader.readAsArrayBuffer(f);
+	});
 
-/* ---------- Preset import/export ---------- */
-document.getElementById('applyPresetBtn').addEventListener('click', () => {
-  const f = document.getElementById('presetInput').files[0];
-  if(!f) return alert('Seleziona un file preset (.txt)');
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const lines = e.target.result.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-    document.querySelectorAll('.catChk').forEach(cb => cb.checked = false);
-    lines.forEach(l => {
-      document.querySelectorAll('.catChk').forEach(cb => {
-        if(cb.dataset.cat === l) cb.checked = true;
-      });
-    });
-    alert('Preset applicato');
-  };
-  reader.readAsText(f, 'utf-8');
-});
+	/* ---------- UI filtri dinamici ---------- */
+	function buildFiltersUI(){
+	  const typesArea = document.getElementById('typesArea');
+	  const catsArea = document.getElementById('catsArea');
+	  typesArea.innerHTML = ''; catsArea.innerHTML = '';
+	  allTypes.forEach(t => {
+		const div = document.createElement('div');
+		div.innerHTML = `<label class="chk"><input type="checkbox" data-type="${t}" class="typeChk" checked /> ${t}</label>`;
+		typesArea.appendChild(div);
+	  });
+	  allCategories.forEach(c => {
+		const div = document.createElement('div');
+		div.innerHTML = `<label class="chk"><input type="checkbox" data-cat="${c}" class="catChk" checked /> ${c}</label>`;
+		catsArea.appendChild(div);
+	  });
+	  // toggleAll initial state
+	  const allChecked = Array.from(document.querySelectorAll('.catChk')).every(cb=>cb.checked);
+	  document.getElementById('toggleAllCats').checked = allChecked;
+	}
 
-document.getElementById('exportPresetBtn').addEventListener('click', () => {
-  const selected = Array.from(document.querySelectorAll('.catChk')).filter(cb=>cb.checked).map(cb=>cb.dataset.cat);
-  if(selected.length === 0) return alert('Nessuna categoria selezionata');
-  const blob = new Blob([selected.join('\n')], {type:'text/plain;charset=utf-8'});
-  saveAs(blob, `preset_categorie_${Date.now()}.txt`);
-});
+	/* ---------- Preset import/export ---------- */
+	document.getElementById('applyPresetBtn').addEventListener('click', () => {
+	  const f = document.getElementById('presetInput').files[0];
+	  if(!f) return alert('Seleziona un file preset (.txt)');
+	  const reader = new FileReader();
+	  reader.onload = (e) => {
+		const lines = e.target.result.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+		document.querySelectorAll('.catChk').forEach(cb => cb.checked = false);
+		lines.forEach(l => {
+		  document.querySelectorAll('.catChk').forEach(cb => {
+			if(cb.dataset.cat === l) cb.checked = true;
+		  });
+		});
+		alert('Preset applicato');
+	  };
+	  reader.readAsText(f, 'utf-8');
+	});
 
-/* ---------- Select/Deselect tutte le categorie ---------- */
-document.getElementById('toggleAllCats').addEventListener('change', (e) => {
-  const v = e.target.checked;
-  document.querySelectorAll('.catChk').forEach(cb => cb.checked = v);
-});
+	document.getElementById('exportPresetBtn').addEventListener('click', () => {
+	  const selected = Array.from(document.querySelectorAll('.catChk')).filter(cb=>cb.checked).map(cb=>cb.dataset.cat);
+	  if(selected.length === 0) return alert('Nessuna categoria selezionata');
+	  const blob = new Blob([selected.join('\n')], {type:'text/plain;charset=utf-8'});
+	  saveAs(blob, `preset_categorie_${Date.now()}.txt`);
+	});
 
-/* ---------- Filtri lettura ---------- */
-function getSelectedFilters(){
-  const typeChecks = Array.from(document.querySelectorAll('.typeChk')).filter(i=>i.checked).map(i=>i.dataset.type);
-  if(typeChecks.length === 0) throw new Error('Seleziona almeno una tipologia');
-  const typePct = {}; typeChecks.forEach(t=>typePct[t]=1/typeChecks.length);
+	/* ---------- Select/Deselect tutte le categorie ---------- */
+	document.getElementById('toggleAllCats').addEventListener('change', (e) => {
+	  const v = e.target.checked;
+	  document.querySelectorAll('.catChk').forEach(cb => cb.checked = v);
+	});
 
-  const selectedCats = Array.from(document.querySelectorAll('.catChk')).filter(cb=>cb.checked).map(cb=>cb.dataset.cat);
-  if(selectedCats.length === 0) throw new Error('Seleziona almeno una categoria');
+	/* ---------- Filtri lettura ---------- */
+	function getSelectedFilters(){
+	  const typeChecks = Array.from(document.querySelectorAll('.typeChk')).filter(i=>i.checked).map(i=>i.dataset.type);
+	  if(typeChecks.length === 0) throw new Error('Seleziona almeno una tipologia');
+	  const typePct = {}; typeChecks.forEach(t=>typePct[t]=1/typeChecks.length);
 
-  const allDiff = document.getElementById('diff_all').checked;
-  const diffChecks = Array.from(document.querySelectorAll('.diffChk')).filter(i=>i.checked).map(i=>i.dataset.diff);
-  const diffs = allDiff ? ['all'] : (diffChecks.length ? diffChecks : ['all']);
+	  const selectedCats = Array.from(document.querySelectorAll('.catChk')).filter(cb=>cb.checked).map(cb=>cb.dataset.cat);
+	  if(selectedCats.length === 0) throw new Error('Seleziona almeno una categoria');
 
-  const order = document.getElementById('orderSelect').value;
-  const desc = document.getElementById('descCheckbox').checked;
-  const totalN = Math.max(1, parseInt(document.getElementById('totalInput').value || 0));
+	  const allDiff = document.getElementById('diff_all').checked;
+	  const diffChecks = Array.from(document.querySelectorAll('.diffChk')).filter(i=>i.checked).map(i=>i.dataset.diff);
+	  const diffs = allDiff ? ['all'] : (diffChecks.length ? diffChecks : ['all']);
 
-  return { typePct, typeChecks, selectedCats, diffs, order, desc, totalN };
-}
+	  const order = document.getElementById('orderSelect').value;
+	  const desc = document.getElementById('descCheckbox').checked;
+	  const totalN = Math.max(1, parseInt(document.getElementById('totalInput').value || 0));
 
-/* ---------- Pool e filtri ---------- */
-function filterPoolByDifficulty(pool, diffs){
-  if(diffs.includes('all')) return pool;
-  const wantedCounts = diffs.map(d => countStars(d));
-  return pool.filter(q => {
-    const qStars = countStars(q.Difficolta || "");
-    return wantedCounts.includes(qStars);
-  });
-}
+	  return { typePct, typeChecks, selectedCats, diffs, order, desc, totalN };
+	}
 
-function buildPool(selectedCats, diffs){
-  let pool = [];
-  selectedCats.forEach(cat => {
-    const arr = workbookData[cat] || [];
-    const filtered = filterPoolByDifficulty(arr, diffs);
-    filtered.forEach(q => {
-      const copy = Object.assign({}, q);
-      copy._category = cat;
-      copy._normTipologia = norm(copy.Tipologia);
-      copy._normCategory = norm(copy._category);
-      pool.push(copy);
-    });
-  });
-  return pool;
-}
+	/* ---------- Pool e filtri ---------- */
+	function filterPoolByDifficulty(pool, diffs){
+	  if(diffs.includes('all')) return pool;
+	  const wantedCounts = diffs.map(d => countStars(d));
+	  return pool.filter(q => {
+		const qStars = countStars(q.Difficolta || "");
+		return wantedCounts.includes(qStars);
+	  });
+	}
 
-/* ---------- Allocazione e sampling ---------- */
-function allocateCounts(N, typePct, typeChecks, selectedCats, pool){
-  const targetType = {};
-  typeChecks.forEach(t => targetType[t] = Math.round(N * (typePct[t] || 0)));
-  let sum = Object.values(targetType).reduce((a,b)=>a+b,0);
-  while(sum !== N){
-    const diff = N - sum;
-    const key = typeChecks[Math.abs(diff) % typeChecks.length];
-    targetType[key] += Math.sign(diff);
-    sum = Object.values(targetType).reduce((a,b)=>a+b,0);
-  }
-  const perCellTargets = {};
-  typeChecks.forEach(t => {
-    perCellTargets[t] = {};
-    const tNorm = norm(t);
-    const poolType = pool.filter(q => q._normTipologia === tNorm);
-    const countsByCat = {};
-    selectedCats.forEach(c => {
-      const cNorm = norm(c);
-      countsByCat[c] = poolType.filter(q => q._normCategory === cNorm).length;
-    });
-    const totalAvailable = Object.values(countsByCat).reduce((a,b)=>a+b,0);
-    if(totalAvailable === 0){
-      selectedCats.forEach(c => perCellTargets[t][c] = 0);
-    } else {
-      selectedCats.forEach(c => perCellTargets[t][c] = Math.round(targetType[t] * (countsByCat[c] / totalAvailable)));
-      let s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
-      while(s !== targetType[t]){
-        const diff = targetType[t] - s;
-        const cat = selectedCats[Math.abs(diff) % selectedCats.length];
-        perCellTargets[t][cat] += Math.sign(diff);
-        s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
-      }
-    }
-  });
-  return { targetType, perCellTargets };
-}
+	function buildPool(selectedCats, diffs){
+	  let pool = [];
+	  selectedCats.forEach(cat => {
+		const arr = workbookData[cat] || [];
+		const filtered = filterPoolByDifficulty(arr, diffs);
+		filtered.forEach(q => {
+		  const copy = Object.assign({}, q);
+		  copy._category = cat;
+		  copy._normTipologia = norm(copy.Tipologia);
+		  copy._normCategory = norm(copy._category);
+		  pool.push(copy);
+		});
+	  });
+	  return pool;
+	}
 
-function sampleQuestions(perCellTargets, pool){
-  const chosen = []; const usedIDs = new Set();
-  for(const t of Object.keys(perCellTargets)){
-    const tNorm = norm(t);
-    for(const c of Object.keys(perCellTargets[t])){
-      const need = perCellTargets[t][c];
-      if(need <= 0) continue;
-      const cNorm = norm(c);
-      const candidates = pool.filter(q => q._normTipologia === tNorm && q._normCategory === cNorm && !usedIDs.has(q.ID));
-      shuffleArray(candidates);
-      const take = candidates.slice(0, need);
-      take.forEach(q => { chosen.push(q); usedIDs.add(q.ID); });
-    }
-  }
-  return { chosen, usedIDs };
-}
+	/* ---------- Allocazione e sampling ---------- */
+	function allocateCounts(N, typePct, typeChecks, selectedCats, pool){
+	  const targetType = {};
+	  typeChecks.forEach(t => targetType[t] = Math.round(N * (typePct[t] || 0)));
+	  let sum = Object.values(targetType).reduce((a,b)=>a+b,0);
+	  while(sum !== N){
+		const diff = N - sum;
+		const key = typeChecks[Math.abs(diff) % typeChecks.length];
+		targetType[key] += Math.sign(diff);
+		sum = Object.values(targetType).reduce((a,b)=>a+b,0);
+	  }
+	  const perCellTargets = {};
+	  typeChecks.forEach(t => {
+		perCellTargets[t] = {};
+		const tNorm = norm(t);
+		const poolType = pool.filter(q => q._normTipologia === tNorm);
+		const countsByCat = {};
+		selectedCats.forEach(c => {
+		  const cNorm = norm(c);
+		  countsByCat[c] = poolType.filter(q => q._normCategory === cNorm).length;
+		});
+		const totalAvailable = Object.values(countsByCat).reduce((a,b)=>a+b,0);
+		if(totalAvailable === 0){
+		  selectedCats.forEach(c => perCellTargets[t][c] = 0);
+		} else {
+		  selectedCats.forEach(c => perCellTargets[t][c] = Math.round(targetType[t] * (countsByCat[c] / totalAvailable)));
+		  let s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
+		  while(s !== targetType[t]){
+			const diff = targetType[t] - s;
+			const cat = selectedCats[Math.abs(diff) % selectedCats.length];
+			perCellTargets[t][cat] += Math.sign(diff);
+			s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
+		  }
+		}
+	  });
+	  return { targetType, perCellTargets };
+	}
 
-function fillRemaining(N, chosen, pool, usedIDs){
-  let remaining = N - chosen.length;
-  if(remaining <= 0) return chosen;
-  const candidates = pool.filter(q => !usedIDs.has(q.ID));
-  shuffleArray(candidates);
-  const take = candidates.slice(0, remaining);
-  take.forEach(q => chosen.push(q));
-  return chosen;
-}
+	function sampleQuestions(perCellTargets, pool){
+	  const chosen = []; const usedIDs = new Set();
+	  for(const t of Object.keys(perCellTargets)){
+		const tNorm = norm(t);
+		for(const c of Object.keys(perCellTargets[t])){
+		  const need = perCellTargets[t][c];
+		  if(need <= 0) continue;
+		  const cNorm = norm(c);
+		  const candidates = pool.filter(q => q._normTipologia === tNorm && q._normCategory === cNorm && !usedIDs.has(q.ID));
+		  shuffleArray(candidates);
+		  const take = candidates.slice(0, need);
+		  take.forEach(q => { chosen.push(q); usedIDs.add(q.ID); });
+		}
+	  }
+	  return { chosen, usedIDs };
+	}
 
-/* ---------- Anteprima conteggi ---------- */
-document.getElementById('previewBtn').addEventListener('click', () => {
-  try {
-    const cfg = getSelectedFilters();
-    const pool = buildPool(cfg.selectedCats, cfg.diffs);
-    const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
-    document.getElementById('previewArea').innerHTML = `
-      Pool totale disponibile: <strong>${pool.length}</strong><br>
-      Target per tipologia: <pre style="color:#e9e2c6">${JSON.stringify(alloc.targetType,null,2)}</pre>
-      Target per cella (tipo x categoria): <pre style="color:#e9e2c6">${JSON.stringify(alloc.perCellTargets,null,2)}</pre>
-    `;
-  } catch(err){
-    alert(err.message);
-  }
-});
+	function fillRemaining(N, chosen, pool, usedIDs){
+	  let remaining = N - chosen.length;
+	  if(remaining <= 0) return chosen;
+	  const candidates = pool.filter(q => !usedIDs.has(q.ID));
+	  shuffleArray(candidates);
+	  const take = candidates.slice(0, remaining);
+	  take.forEach(q => chosen.push(q));
+	  return chosen;
+	}
 
-/* ---------- Export PDF e apertura viewer ---------- */
-document.getElementById('exportBtn').addEventListener('click', async () => {
-  try {
-    const cfg = getSelectedFilters();
-    const pool = buildPool(cfg.selectedCats, cfg.diffs);
-    if(pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
-    const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
-    let { chosen, usedIDs } = sampleQuestions(alloc.perCellTargets, pool);
-    chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
+	/* ---------- Anteprima conteggi ---------- */
+	document.getElementById('previewBtn').addEventListener('click', () => {
+	  try {
+		const cfg = getSelectedFilters();
+		const pool = buildPool(cfg.selectedCats, cfg.diffs);
+		const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
+		document.getElementById('previewArea').innerHTML = `
+		  Pool totale disponibile: <strong>${pool.length}</strong><br>
+		  Target per tipologia: <pre style="color:#e9e2c6">${JSON.stringify(alloc.targetType,null,2)}</pre>
+		  Target per cella (tipo x categoria): <pre style="color:#e9e2c6">${JSON.stringify(alloc.perCellTargets,null,2)}</pre>
+		`;
+	  } catch(err){
+		alert(err.message);
+	  }
+	});
 
-    // ordering
-    if(cfg.order === 'random') shuffleArray(chosen);
-    else if(cfg.order === 'alpha_global') chosen.sort((a,b)=> (a.Domanda||'').localeCompare(b.Domanda||''));
-    else if(cfg.order === 'alpha_cat') chosen.sort((a,b)=> a._category !== b._category ? a._category.localeCompare(b._category) : (a.Domanda||'').localeCompare(b.Domanda||''));
-    else if(cfg.order === 'difficulty') chosen.sort((a,b)=> countStars(a.Difficolta||'') - countStars(b.Difficolta||''));
-    if(cfg.desc) chosen.reverse();
+	/* ---------- Export PDF e apertura viewer ---------- */
+	document.getElementById('exportBtn').addEventListener('click', async () => {
+	  try {
+		const cfg = getSelectedFilters();
+		const pool = buildPool(cfg.selectedCats, cfg.diffs);
+		if(pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
+		const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
+		let { chosen, usedIDs } = sampleQuestions(alloc.perCellTargets, pool);
+		chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
 
-    selectedQuestions = chosen.slice(0, cfg.totalN);
+		// ordering
+		if(cfg.order === 'random') shuffleArray(chosen);
+		else if(cfg.order === 'alpha_global') chosen.sort((a,b)=> (a.Domanda||'').localeCompare(b.Domanda||''));
+		else if(cfg.order === 'alpha_cat') chosen.sort((a,b)=> a._category !== b._category ? a._category.localeCompare(b._category) : (a.Domanda||'').localeCompare(b.Domanda||''));
+		else if(cfg.order === 'difficulty') chosen.sort((a,b)=> countStars(a.Difficolta||'') - countStars(b.Difficolta||''));
+		if(cfg.desc) chosen.reverse();
 
-    await generatePdf(selectedQuestions, cfg);
-    openViewer(selectedQuestions);
-  } catch(err){
-    alert(err.message);
-  }
-});
+		selectedQuestions = chosen.slice(0, cfg.totalN);
 
-/* ---------- Genera PDF con html2pdf ---------- */
-async function generatePdf(questions, cfg){
-  const container = document.createElement('div');
-  container.style.width = '1200px';
-  container.style.padding = '24px';
-  container.style.fontFamily = 'Arial, Helvetica, sans-serif';
-  container.style.color = '#111';
-  container.style.background = '#fff';
+		await generatePdf(selectedQuestions, cfg);
+		openViewer(selectedQuestions);
+	  } catch(err){
+		alert(err.message);
+	  }
+	});
 
-  const header = document.createElement('div');
-  header.innerHTML = `<h1 style="margin:0;color:${'#120E01'}">Quiz esportato</h1>
-    <div style="margin-top:6px">Totale domande: <strong>${questions.length}</strong></div>
-    <div style="margin-top:6px">Filtri: Difficoltà=${cfg.diffs.join(',')}, Ordinamento=${cfg.order}, Decrescente=${cfg.desc}</div>
-    <hr style="margin:12px 0">`;
-  container.appendChild(header);
+	/* ---------- Genera PDF con html2pdf ---------- */
+	async function generatePdf(questions, cfg){
+	  const container = document.createElement('div');
+	  container.style.width = '1200px';
+	  container.style.padding = '24px';
+	  container.style.fontFamily = 'Arial, Helvetica, sans-serif';
+	  container.style.color = '#111';
+	  container.style.background = '#fff';
 
-  questions.forEach((q, idx) => {
-    const qDiv = document.createElement('div');
-    qDiv.style.marginBottom = '12px';
-    qDiv.innerHTML = `<div style="font-weight:700">${idx+1}. ${escapeHtml(q.Domanda)}</div>`;
-    const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
-    if(answers.length){
-      answers.forEach((a,i) => {
-        const p = document.createElement('div');
-        p.style.marginLeft = '12px';
-        p.innerHTML = `<strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(a)}`;
-        qDiv.appendChild(p);
-      });
-    } else {
-      const p = document.createElement('div'); p.style.marginLeft='12px'; p.innerHTML = `<em>Risposta aperta</em>`; qDiv.appendChild(p);
-    }
-    const meta = document.createElement('div'); meta.style.marginTop='6px'; meta.style.color='#666'; meta.style.fontSize='12px';
-    meta.innerText = `Categoria: ${q._category} • Tipologia: ${q.Tipologia} • Difficoltà: ${q.Difficolta}`;
-    qDiv.appendChild(meta);
-    container.appendChild(qDiv);
-    const hr = document.createElement('hr'); hr.style.margin='8px 0'; container.appendChild(hr);
-  });
+	  const header = document.createElement('div');
+	  header.innerHTML = `<h1 style="margin:0;color:${'#120E01'}">Quiz esportato</h1>
+		<div style="margin-top:6px">Totale domande: <strong>${questions.length}</strong></div>
+		<div style="margin-top:6px">Filtri: Difficoltà=${cfg.diffs.join(',')}, Ordinamento=${cfg.order}, Decrescente=${cfg.desc}</div>
+		<hr style="margin:12px 0">`;
+	  container.appendChild(header);
 
-  // appendice soluzioni
-  const solHeader = document.createElement('div'); solHeader.innerHTML = `<h2>Appendice soluzioni</h2>`; container.appendChild(solHeader);
-  questions.forEach((q, idx) => {
-    const answersRaw = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF];
-    let sol = "[non specificata]";
-    for(let i=0;i<answersRaw.length;i++){ if((answersRaw[i]||'').includes('###')){ sol = String.fromCharCode(65+i); break; } }
-    const p = document.createElement('div'); p.style.marginBottom='6px'; p.innerText = `${idx+1}. ${sol}`; container.appendChild(p);
-  });
+	  questions.forEach((q, idx) => {
+		const qDiv = document.createElement('div');
+		qDiv.style.marginBottom = '12px';
+		qDiv.innerHTML = `<div style="font-weight:700">${idx+1}. ${escapeHtml(q.Domanda)}</div>`;
+		const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
+		if(answers.length){
+		  answers.forEach((a,i) => {
+			const p = document.createElement('div');
+			p.style.marginLeft = '12px';
+			p.innerHTML = `<strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(a)}`;
+			qDiv.appendChild(p);
+		  });
+		} else {
+		  const p = document.createElement('div'); p.style.marginLeft='12px'; p.innerHTML = `<em>Risposta aperta</em>`; qDiv.appendChild(p);
+		}
+		const meta = document.createElement('div'); meta.style.marginTop='6px'; meta.style.color='#666'; meta.style.fontSize='12px';
+		meta.innerText = `Categoria: ${q._category} • Tipologia: ${q.Tipologia} • Difficoltà: ${q.Difficolta}`;
+		qDiv.appendChild(meta);
+		container.appendChild(qDiv);
+		const hr = document.createElement('hr'); hr.style.margin='8px 0'; container.appendChild(hr);
+	  });
 
-  container.style.position = 'fixed'; container.style.left = '-9999px';
-  document.body.appendChild(container);
+	  // appendice soluzioni
+	  const solHeader = document.createElement('div'); solHeader.innerHTML = `<h2>Appendice soluzioni</h2>`; container.appendChild(solHeader);
+	  questions.forEach((q, idx) => {
+		const answersRaw = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF];
+		let sol = "[non specificata]";
+		for(let i=0;i<answersRaw.length;i++){ if((answersRaw[i]||'').includes('###')){ sol = String.fromCharCode(65+i); break; } }
+		const p = document.createElement('div'); p.style.marginBottom='6px'; p.innerText = `${idx+1}. ${sol}`; container.appendChild(p);
+	  });
 
-  const opt = { margin:10, filename:`quiz_export_${Date.now()}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'pt',format:'a4',orientation:'portrait'} };
-  try {
-    await html2pdf().set(opt).from(container).save();
-  } catch(err){
-    alert('Errore durante la generazione del PDF: ' + (err && err.message ? err.message : err));
-  } finally {
-    document.body.removeChild(container);
-  }
-}
+	  container.style.position = 'fixed'; container.style.left = '-9999px';
+	  document.body.appendChild(container);
 
-/* ---------- Viewer ---------- */
-let currentIndex = 0;
-function openViewer(questions){
-  currentIndex = 0;
-  document.getElementById('viewer').style.display = 'flex';
-  renderSlide();
-}
-function renderSlide(){
-  const container = document.getElementById('slideContent');
-  const q = selectedQuestions[currentIndex];
-  const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
-  container.innerHTML = `<h2 style="margin:0 0 8px 0">Domanda ${currentIndex+1} / ${selectedQuestions.length}</h2>
-    <h3 style="margin:0 0 12px 0">${escapeHtml(q.Domanda)}</h3>
-    <div>${answers.length ? answers.map((a,i)=>`<div style="margin:6px 0"><strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(a)}</div>`).join('') : '<em>Risposta aperta</em>'}</div>
-    <div style="margin-top:12px;color:#666">Categoria: ${escapeHtml(q._category)} • Tipologia: ${escapeHtml(q.Tipologia)} • Difficoltà: ${escapeHtml(q.Difficolta)}</div>`;
-}
-document.getElementById('nextQ').addEventListener('click', ()=>{ if(currentIndex < selectedQuestions.length-1) currentIndex++; renderSlide(); });
-document.getElementById('prevQ').addEventListener('click', ()=>{ if(currentIndex > 0) currentIndex--; renderSlide(); });
-document.getElementById('closeViewer').addEventListener('click', ()=>{ document.getElementById('viewer').style.display='none'; });
-document.getElementById('fsBtn').addEventListener('click', ()=>{ const el=document.getElementById('slide'); if(el.requestFullscreen) el.requestFullscreen(); });
+	  const opt = { margin:10, filename:`quiz_export_${Date.now()}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'pt',format:'a4',orientation:'portrait'} };
+	  try {
+		await html2pdf().set(opt).from(container).save();
+	  } catch(err){
+		alert('Errore durante la generazione del PDF: ' + (err && err.message ? err.message : err));
+	  } finally {
+		document.body.removeChild(container);
+	  }
+	}
 
-/* ---------- Apri sessione senza esportare ---------- */
-document.getElementById('startGameBtn').addEventListener('click', () => {
-  try {
-    const cfg = getSelectedFilters();
-    const pool = buildPool(cfg.selectedCats, cfg.diffs);
-    if(pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
-    shuffleArray(pool);
-    selectedQuestions = pool.slice(0, cfg.totalN);
-    openViewer(selectedQuestions);
-  } catch(err){ alert(err.message); }
+	/* ---------- Viewer ---------- */
+	let currentIndex = 0;
+	function openViewer(questions){
+	  currentIndex = 0;
+	  document.getElementById('viewer').style.display = 'flex';
+	  renderSlide();
+	}
+	function renderSlide(){
+	  const container = document.getElementById('slideContent');
+	  const q = selectedQuestions[currentIndex];
+	  const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
+	  container.innerHTML = `<h2 style="margin:0 0 8px 0">Domanda ${currentIndex+1} / ${selectedQuestions.length}</h2>
+		<h3 style="margin:0 0 12px 0">${escapeHtml(q.Domanda)}</h3>
+		<div>${answers.length ? answers.map((a,i)=>`<div style="margin:6px 0"><strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(a)}</div>`).join('') : '<em>Risposta aperta</em>'}</div>
+		<div style="margin-top:12px;color:#666">Categoria: ${escapeHtml(q._category)} • Tipologia: ${escapeHtml(q.Tipologia)} • Difficoltà: ${escapeHtml(q.Difficolta)}</div>`;
+	}
+	document.getElementById('nextQ').addEventListener('click', ()=>{ if(currentIndex < selectedQuestions.length-1) currentIndex++; renderSlide(); });
+	document.getElementById('prevQ').addEventListener('click', ()=>{ if(currentIndex > 0) currentIndex--; renderSlide(); });
+	document.getElementById('closeViewer').addEventListener('click', ()=>{ document.getElementById('viewer').style.display='none'; });
+	document.getElementById('fsBtn').addEventListener('click', ()=>{ const el=document.getElementById('slide'); if(el.requestFullscreen) el.requestFullscreen(); });
+
+	/* ---------- Apri sessione senza esportare ---------- */
+	document.getElementById('startGameBtn').addEventListener('click', () => {
+	  try {
+		const cfg = getSelectedFilters();
+		const pool = buildPool(cfg.selectedCats, cfg.diffs);
+		if(pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
+		shuffleArray(pool);
+		selectedQuestions = pool.slice(0, cfg.totalN);
+		openViewer(selectedQuestions);
+	  } catch(err){ alert(err.message); }
+	});
 });
 </script>
 </body>
