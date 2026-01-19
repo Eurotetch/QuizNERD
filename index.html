@@ -48,14 +48,15 @@
 	/* assicura che i contenuti interni non escano */
 	.card .row { flex-wrap: wrap; }
 
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--nero) 0%, #1b1408 100%);color:var(--bianco);font-family:Inter, Arial, Helvetica, sans-serif}
+    html,body{margin:0;background:linear-gradient(180deg,var(--nero) 0%, #1b1408 100%);color:var(--bianco);font-family:Inter, Arial, Helvetica, sans-serif}
     .container{max-width:1200px;margin:28px auto;padding:20px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;border:2px solid rgba(255,255,255,0.03)}
     header{display:flex;align-items:center;gap:16px}
     header img{height:64px}
     h1{margin:0;font-size:1.6rem;color:var(--giallo)}
     .subtitle{color:#d9cfa8;margin-top:4px;font-size:0.95rem}
-    .grid{display:grid;grid-template-columns:360px 1fr;gap:18px;margin-top:18px}
+    .grid{display:grid;grid-template-columns:750px 1fr;gap:18px;margin-top:18px}
     .card{background:rgba(255,255,255,0.03);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.04)}
+	.infocard{max-width 389px;}
     label{display:block;font-weight:700;margin-bottom:6px;color:var(--bianco)}
     .list{max-height:320px;overflow:auto;padding:8px;border-radius:8px;background:rgba(0,0,0,0.12)}
     .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -63,9 +64,10 @@
     input[type="number"]{width:100px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:var(--bianco)}
     select, button{padding:8px 10px;border-radius:8px;border:none}
     button.primary{background:var(--giallo);color:var(--nero);font-weight:700}
-    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--bianco)}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--bianco);cursor:pointer;}
+	button.ghost:hover{color:rgba(255,255,255,0.03);background:var(--bianco)}
     .small{font-size:0.9rem;color:#d6cfa8}
-    .controls{display:flex;gap:8px;align-items:center;margin-top:12px}
+    .controls{display:flex;gap:8px;align-items:center;}
     #previewArea{margin-top:12px;color:var(--bianco)}
     /* viewer */
     #viewer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:9999}
@@ -116,41 +118,6 @@
           </div>
         </div>
         <div id="catsArea" class="list"></div>
-
-        <div style="height:12px"></div>
-        <label>DIFFICOLTÀ</label>
-        <div class="row">
-          <label class="chk"><input id="diff_all" type="checkbox" /> Tutte le difficoltà</label>
-          <label class="chk"><input class="diffChk" data-diff="⭐" type="checkbox" /> Facili ★</label>
-          <label class="chk"><input class="diffChk" data-diff="⭐⭐" type="checkbox" /> Medie ★★</label>
-          <label class="chk"><input class="diffChk" data-diff="⭐⭐⭐" type="checkbox" /> Difficili ★★★</label>
-          <label class="chk"><input class="diffChk" data-diff="⭐⭐⭐⭐" type="checkbox" /> Estreme ★★★★</label>
-        </div>
-
-        <div style="height:12px"></div>
-        <label>ORDINAMENTO</label>
-        <div class="row">
-          <select id="orderSelect">
-            <option value="random">Ordine casuale</option>
-            <option value="alpha_global">Ordine alfabetico globale</option>
-            <option value="alpha_cat">Ordine alfabetico categoria per categoria</option>
-            <option value="difficulty">Ordine di difficoltà</option>
-          </select>
-          <label class="chk" style="margin-left:8px"><input id="descCheckbox" type="checkbox" /> Decrescente</label>
-        </div>
-
-        <div style="height:12px"></div>
-        <div class="controls">
-          <button id="previewBtn" class="ghost">Anteprima conteggi</button>
-          <button id="exportBtn" class="primary">Esporta PDF</button>
-          <button id="startGameBtn" class="ghost">Apri sessione di gioco</button>
-          <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-            <label class="small">Totale Domande</label>
-            <input id="totalInput" type="number" min="1" value="25" />
-          </div>
-        </div>
-
-        <div id="previewArea" class="footer-note"></div>
       </div>
 
       <!-- Colonna destra: info e viewer -->
@@ -171,8 +138,49 @@
           <div style="height:12px"></div>
           <div class="small" id="statusArea">Nessun file caricato</div>
         </div>
+		
+		<div class="card" style="margin-top:12px;max-width: 389px;flex-wrap: wrap;">          
+			<label>DIFFICOLTÀ</label>
+			<div class="row">
+			  <label class="chk"><input id="diff_all" type="checkbox" /> Tutte le difficoltà</label>
+			  <label class="chk"><input class="diffChk" data-diff="⭐" type="checkbox" /> Facili ★</label>
+			  <label class="chk"><input class="diffChk" data-diff="⭐⭐" type="checkbox" /> Medie ★★</label>
+			  <label class="chk"><input class="diffChk" data-diff="⭐⭐⭐" type="checkbox" /> Difficili ★★★</label>
+			  <label class="chk"><input class="diffChk" data-diff="⭐⭐⭐⭐" type="checkbox" /> Estreme ★★★★</label>
+			</div>
+
+			<div style="height:12px"></div>
+			<label>ORDINAMENTO</label>
+			<div class="row">
+			  <select id="orderSelect">
+				<option value="random">Ordine casuale</option>
+				<option value="alpha_global">Ordine alfabetico globale</option>
+				<option value="alpha_cat">Ordine alfabetico categoria per categoria</option>
+				<option value="difficulty">Ordine di difficoltà</option>
+			  </select>
+			  <label class="chk" style="margin-left:8px"><input id="descCheckbox" type="checkbox" /> Decrescente</label>
+			</div>
+		</div>
+		
+		<div class="card" style="margin-top:12px;max-width: 389px;flex-wrap: wrap;">          
+			<h3 style="margin:0;color:var(--giallo)">Controlli finali</h3>
+			<div class="controls">
+			  <button id="previewBtn" class="ghost">Anteprima conteggi</button>
+			  <button id="exportBtn" class="primary">Esporta PDF</button>
+			  <button id="startGameBtn" class="ghost">Apri sessione di gioco</button>
+			  <div style="margin-left:auto;display:flex;align-items:center;gap: 8px;flex-wrap: wrap;text-align: center;">
+				<label class="small">Totale Domande</label>
+				<input id="totalInput" type="number" min="1" value="25" style="text-align: center;">
+			  </div>
+			</div>
+		</div>
+		
       </div>
     </div>
+	
+	<div class="container">
+		<div id="previewArea" class="footer-note"></div>
+	</div>
   </div>
 
   <!-- Viewer -->
