@@ -1,0 +1,101 @@
+ID;Tema;Domanda;Tipologia;Risposte;Difficoltà;Data creazione
+CIN20101;Cinema 2010-2026;Quale film ha vinto l'Oscar come Miglior Film per l'anno 2010 (cerimonia 2011)?;4 risposte;###A) Il discorso del re, B) The Social Network, C) Inception, D) Il gladiatore;⭐⭐⭐;16/01/2026
+CIN20102;Cinema 2010-2026;Chi ha diretto "Inception" (2010)?;4 risposte;A) David Fincher, ###B) Christopher Nolan, C) Ridley Scott, D) Denis Villeneuve;⭐⭐⭐;16/01/2026
+CIN20103;Cinema 2010-2026;Quale film del 2014 è diretto da Alejandro González Iñárritu e racconta la sopravvivenza in ambienti ostili?;4 risposte;A) Birdman, B) Revenant, ###C) Revenant - Redivivo, D) The Revenant;⭐⭐⭐;16/01/2026
+CIN20104;Cinema 2010-2026;La versione italiana del film "La La Land" è uscita nel 2016.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20105;Cinema 2010-2026;Scrivi il nome del regista di "Blade Runner 2049".;Risposta aperta;###Denis Villeneuve;⭐⭐⭐;16/01/2026
+CIN20106;Cinema 2010-2026;Quale film del 2013 ha rilanciato la saga di Godzilla sul grande schermo?;4 risposte;A) Godzilla (2014), ###B) Godzilla, C) King of the Monsters, D) Godzilla vs Kong;⭐⭐;16/01/2026
+CIN20107;Cinema 2010-2026;Il film "Parasite" (2019) ha vinto l'Oscar come Miglior Film.;Vero/Falso;###Vero, Falso;⭐⭐⭐;16/01/2026
+CIN20108;Cinema 2010-2026;Chi ha diretto "The Social Network" (2010)?;4 risposte;A) Aaron Sorkin, ###B) David Fincher, C) Christopher Nolan, D) Steven Soderbergh;⭐⭐;16/01/2026
+CIN20109;Cinema 2010-2026;Quale film del 2012 è diretto da Quentin Tarantino e ambientato durante la Seconda Guerra Mondiale?;4 risposte;A) Django Unchained, ###B) Bastardi senza gloria, C) Inglourious Basterds, D) Pulp Fiction;⭐⭐;16/01/2026
+CIN20110;Cinema 2010-2026;Scrivi il nome dell'attore che interpreta il protagonista in "Il discorso del re".;Risposta aperta;###Colin Firth;⭐⭐;16/01/2026
+CIN20111;Cinema 2010-2026;La pellicola "Mad Max: Fury Road" è uscita nel 2015.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20112;Cinema 2010-2026;Quale regista ha diretto "Mad Max: Fury Road"?;4 risposte;A) George Miller, ###B) George Miller, C) Peter Weir, D) David Lynch;⭐⭐;16/01/2026
+CIN20113;Cinema 2010-2026;Quale film del 2019 è diretto da Bong Joon-ho e critica le disuguaglianze sociali?;4 risposte;A) Oldboy, B) Snowpiercer, ###C) Parasite, D) The Host;⭐⭐⭐;16/01/2026
+CIN20114;Cinema 2010-2026;Scrivi il nome del regista di "Il caso Spotlight" (Spotlight).;Risposta aperta;###Tom McCarthy;⭐⭐⭐;16/01/2026
+CIN20115;Cinema 2010-2026;Quale film del 2010 ha come protagonista un gruppo di ladri che usano la tecnologia per compiere rapine?;4 risposte;A) Inception, B) Now You See Me, ###C) Now You See Me, D) The Italian Job;⭐⭐;16/01/2026
+CIN20116;Cinema 2010-2026;Il film "Gravity" (2013) è diretto da Alfonso Cuarón.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20117;Cinema 2010-2026;Chi ha diretto "Gravity" (2013)?;4 risposte;A) Alfonso Cuarón, B) Christopher Nolan, ###C) Alfonso Cuarón, D) Alejandro González Iñárritu;⭐⭐;16/01/2026
+CIN20118;Cinema 2010-2026;Quale film del 2016 è diretto da Damien Chazelle e celebra il mondo del musical?;4 risposte;A) The Greatest Showman, ###B) La La Land, C) Moulin Rouge, D) Chicago;⭐⭐⭐;16/01/2026
+CIN20119;Cinema 2010-2026;Scrivi il nome dell'attrice protagonista in "La La Land".;Risposta aperta;###Emma Stone;⭐⭐;16/01/2026
+CIN20120;Cinema 2010-2026;Quale film del 2011 è diretto da Michel Hazanavicius e omaggia il cinema muto?;4 risposte;A) The Artist, ###B) The Artist, C) Hugo, D) The King's Speech;⭐⭐;16/01/2026
+CIN20121;Cinema 2010-2026;La pellicola "The Artist" ha vinto l'Oscar come Miglior Film nel 2012.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20122;Cinema 2010-2026;Quale film del 2018 è diretto da Alfonso Cuarón e ambientato in Messico?;4 risposte;A) Roma, ###B) Roma, C) Gravity, D) Y Tu Mamá También;⭐⭐⭐;16/01/2026
+CIN20123;Cinema 2010-2026;Scrivi il nome del regista di "Roma".;Risposta aperta;###Alfonso Cuarón;⭐⭐⭐;16/01/2026
+CIN20124;Cinema 2010-2026;Quale film del 2017 ha vinto l'Oscar per il Miglior Film e affronta temi razziali negli Stati Uniti?;4 risposte;A) Moonlight, B) La La Land, ###C) Moonlight, D) Green Book;⭐⭐⭐;16/01/2026
+CIN20125;Cinema 2010-2026;La pellicola "Moonlight" ha vinto l'Oscar per il Miglior Film nel 2017.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20126;Cinema 2010-2026;Quale film del 2012 è diretto da Ben Affleck e racconta inchieste giornalistiche?;4 risposte;A) Argo, ###B) Argo, C) The Town, D) Gone Baby Gone;⭐⭐;16/01/2026
+CIN20127;Cinema 2010-2026;Scrivi il nome del regista di "Argo".;Risposta aperta;###Ben Affleck;⭐⭐;16/01/2026
+CIN20128;Cinema 2010-2026;Quale film del 2010 è un adattamento del romanzo di Stieg Larsson "Uomini che odiano le donne" nella versione americana?;4 risposte;A) The Girl with the Dragon Tattoo (2011), B) Millennium, C) Uomini che odiano le donne (2011), ###D) The Girl with the Dragon Tattoo;⭐⭐;16/01/2026
+CIN20129;Cinema 2010-2026;La versione italiana di "The Girl with the Dragon Tattoo" è uscita nel 2011.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20130;Cinema 2010-2026;Quale film del 2015 è diretto da Alejandro González Iñárritu e racconta la lotta per la sopravvivenza di un uomo nella natura?;4 risposte;A) Birdman, B) Revenant - Redivivo, ###C) Revenant - Redivivo, D) The Revenant;⭐⭐⭐;16/01/2026
+CIN20131;Cinema 2010-2026;Scrivi il nome dell'attore che interpreta Hugh Glass in "Revenant - Redivivo".;Risposta aperta;###Leonardo DiCaprio;⭐⭐⭐;16/01/2026
+CIN20132;Cinema 2010-2026;Quale film del 2013 è diretto da Alfonso Cuarón e ha come protagonista un astronauta in difficoltà nello spazio?;4 risposte;A) Gravity, ###B) Gravity, C) Interstellar, D) The Martian;⭐⭐;16/01/2026
+CIN20133;Cinema 2010-2026;La pellicola "The Martian" (2015) è diretta da Ridley Scott.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20134;Cinema 2010-2026;Chi ha diretto "The Martian" (2015)?;4 risposte;A) Christopher Nolan, ###B) Ridley Scott, C) James Cameron, D) Denis Villeneuve;⭐⭐;16/01/2026
+CIN20135;Cinema 2010-2026;Quale film del 2014 è diretto da Richard Linklater e racconta la vita di un gruppo di ragazzi nel corso di anni?;4 risposte;A) Boyhood, ###B) Boyhood, C) Dazed and Confused, D) Before Midnight;⭐⭐⭐;16/01/2026
+CIN20136;Cinema 2010-2026;Scrivi il nome del regista di "Boyhood".;Risposta aperta;###Richard Linklater;⭐⭐⭐;16/01/2026
+CIN20137;Cinema 2010-2026;Quale film del 2016 è diretto da Denis Villeneuve e basato su un romanzo di Frank Herbert?;4 risposte;A) Arrival, ###B) Dune, C) Blade Runner 2049, D) The Martian;⭐⭐⭐;16/01/2026
+CIN20138;Cinema 2010-2026;La pellicola "Arrival" (2016) è diretta da Denis Villeneuve.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20139;Cinema 2010-2026;Scrivi il nome dell'attore protagonista in "Arrival".;Risposta aperta;###Amy Adams;⭐⭐;16/01/2026
+CIN20140;Cinema 2010-2026;Quale film del 2017 è diretto da Guillermo del Toro e mescola fantasy e guerra?;4 risposte;A) The Shape of Water, ###B) La forma dell'acqua, C) Pan's Labyrinth, D) Crimson Peak;⭐⭐⭐;16/01/2026
+CIN20141;Cinema 2010-2026;La forma dell'acqua ha vinto l'Oscar per il Miglior Film nel 2018.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20142;Cinema 2010-2026;Scrivi il nome del regista di "La forma dell'acqua".;Risposta aperta;###Guillermo del Toro;⭐⭐;16/01/2026
+CIN20143;Cinema 2010-2026;Quale film del 2014 è diretto da Christopher Nolan e affronta il tema del tempo e della memoria?;4 risposte;A) Interstellar, B) Dunkirk, ###C) Interstellar, D) Tenet;⭐⭐⭐;16/01/2026
+CIN20144;Cinema 2010-2026;La pellicola "Interstellar" è uscita nel 2014: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20145;Cinema 2010-2026;Scrivi il nome dell'attore protagonista in "Interstellar".;Risposta aperta;###Matthew McConaughey;⭐⭐;16/01/2026
+CIN20146;Cinema 2010-2026;Quale film del 2019 è diretto da Sam Mendes e racconta la Prima Guerra Mondiale in un piano sequenza apparente?;4 risposte;A) 1917, ###B) 1917, C) Dunkirk, D) Saving Private Ryan;⭐⭐⭐;16/01/2026
+CIN20147;Cinema 2010-2026;La pellicola "1917" è stata premiata per la sua fotografia e regia tecnica.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20148;Cinema 2010-2026;Scrivi il nome del regista di "1917".;Risposta aperta;###Sam Mendes;⭐⭐;16/01/2026
+CIN20149;Cinema 2010-2026;Quale film del 2013 è diretto da Paul Greengrass e continua la saga di Jason Bourne?;4 risposte;A) The Bourne Identity, B) The Bourne Supremacy, ###C) The Bourne Ultimatum, D) Jason Bourne;⭐⭐;16/01/2026
+CIN20150;Cinema 2010-2026;La pellicola "The Bourne Ultimatum" è uscita nel 2007: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20151;Cinema 2010-2026;Scrivi il nome dell'attore che interpreta Jason Bourne nella trilogia originale.;Risposta aperta;###Matt Damon;⭐⭐;16/01/2026
+CIN20152;Cinema 2010-2026;Quale film del 2015 è diretto da George Miller e riporta in scena il mondo post-apocalittico di Mad Max?;4 risposte;A) Mad Max: Fury Road, ###B) Mad Max: Fury Road, C) Mad Max 2, D) Mad Max: Beyond Thunderdome;⭐⭐;16/01/2026
+CIN20153;Cinema 2010-2026;La pellicola "Mad Max: Fury Road" ha vinto numerosi premi tecnici agli Oscar.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20154;Cinema 2010-2026;Scrivi il nome dell'attrice protagonista in "Mad Max: Fury Road".;Risposta aperta;###Charlize Theron;⭐⭐;16/01/2026
+CIN20155;Cinema 2010-2026;Quale film del 2018 è diretto da Bradley Cooper e vede Lady Gaga come protagonista?;4 risposte;A) A Star Is Born, ###B) A Star Is Born, C) La La Land, D) The Greatest Showman;⭐⭐;16/01/2026
+CIN20156;Cinema 2010-2026;La pellicola "A Star Is Born" ha ricevuto nomination agli Oscar per la miglior canzone.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20157;Cinema 2010-2026;Scrivi il nome del regista di "A Star Is Born" (2018).;Risposta aperta;###Bradley Cooper;⭐⭐;16/01/2026
+CIN20158;Cinema 2010-2026;Quale film del 2016 è diretto da Denis Villeneuve e racconta l'arrivo di alieni sulla Terra?;4 risposte;A) Arrival, ###B) Arrival, C) Contact, D) Close Encounters;⭐⭐;16/01/2026
+CIN20159;Cinema 2010-2026;La pellicola "Arrival" è basata su un racconto di Ted Chiang.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20160;Cinema 2010-2026;Scrivi il nome dell'autore del racconto da cui è tratto "Arrival".;Risposta aperta;###Ted Chiang;⭐⭐;16/01/2026
+CIN20161;Cinema 2010-2026;Quale film del 2020 ha vinto l'Oscar per il Miglior Film e affronta temi di famiglia e identità?;4 risposte;A) Nomadland, ###B) Nomadland, C) The Father, D) Promising Young Woman;⭐⭐⭐;16/01/2026
+CIN20162;Cinema 2010-2026;La pellicola "Nomadland" è diretta da Chloé Zhao.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20163;Cinema 2010-2026;Scrivi il nome della regista di "Nomadland".;Risposta aperta;###Chloé Zhao;⭐⭐;16/01/2026
+CIN20164;Cinema 2010-2026;Quale film del 2019 è diretto da Todd Phillips e offre una nuova interpretazione del personaggio Joker?;4 risposte;A) Joker, ###B) Joker, C) The Dark Knight, D) Batman Begins;⭐⭐⭐;16/01/2026
+CIN20165;Cinema 2010-2026;La pellicola "Joker" ha vinto l'Oscar per la Migliore Interpretazione Maschile per Joaquin Phoenix.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20166;Cinema 2010-2026;Scrivi il nome dell'attore che interpreta Joker nel film del 2019.;Risposta aperta;###Joaquin Phoenix;⭐⭐;16/01/2026
+CIN20167;Cinema 2010-2026;Quale film del 2017 è diretto da Jordan Peele e mescola horror e critica sociale?;4 risposte;A) Get Out, ###B) Get Out, C) Us, D) The Babadook;⭐⭐⭐;16/01/2026
+CIN20168;Cinema 2010-2026;La pellicola "Get Out" ha vinto l'Oscar per la Migliore Sceneggiatura Originale.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20169;Cinema 2010-2026;Scrivi il nome del regista di "Get Out".;Risposta aperta;###Jordan Peele;⭐⭐;16/01/2026
+CIN20170;Cinema 2010-2026;Quale film del 2014 è diretto da Richard Linklater e racconta dodici anni nella vita di un ragazzo?;4 risposte;A) Boyhood, ###B) Boyhood, C) Before Midnight, D) Dazed and Confused;⭐⭐⭐;16/01/2026
+CIN20171;Cinema 2010-2026;La pellicola "Boyhood" è stata girata nell'arco di dodici anni con gli stessi attori.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20172;Cinema 2010-2026;Scrivi il nome dell'attore protagonista in "Boyhood".;Risposta aperta;###Ellar Coltrane;⭐⭐;16/01/2026
+CIN20173;Cinema 2010-2026;Quale film del 2013 è diretto da Alfonso Cuarón e racconta la vita di una famiglia a Città del Messico?;4 risposte;A) Roma, ###B) Roma, C) Y Tu Mamá También, D) Gravity;⭐⭐⭐;16/01/2026
+CIN20174;Cinema 2010-2026;La pellicola "Roma" è stata distribuita principalmente su una piattaforma di streaming oltre che al cinema.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20175;Cinema 2010-2026;Scrivi il nome dell'attrice protagonista in "Roma".;Risposta aperta;###Yalitza Aparicio;⭐⭐;16/01/2026
+CIN20176;Cinema 2010-2026;Quale film del 2016 è diretto da Mel Gibson e racconta la storia di un soldato in Afghanistan?;4 risposte;A) Hacksaw Ridge, ###B) La battaglia di Hacksaw Ridge, C) Braveheart, D) Apocalypto;⭐⭐;16/01/2026
+CIN20177;Cinema 2010-2026;La pellicola "La battaglia di Hacksaw Ridge" ha vinto l'Oscar per la Migliore Regia.;Vero/Falso;Vero, ###Falso;⭐⭐;16/01/2026
+CIN20178;Cinema 2010-2026;Scrivi il nome del protagonista di "La battaglia di Hacksaw Ridge".;Risposta aperta;###Andrew Garfield;⭐⭐;16/01/2026
+CIN20179;Cinema 2010-2026;Quale film del 2012 è diretto da Ben Affleck e racconta il salvataggio di ostaggi in Iran?;4 risposte;A) Argo, ###B) Argo, C) The Town, D) Gone Baby Gone;⭐⭐;16/01/2026
+CIN20180;Cinema 2010-2026;La pellicola "Argo" ha vinto l'Oscar per il Miglior Film nel 2013.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20181;Cinema 2010-2026;Scrivi il nome del regista di "Argo".;Risposta aperta;###Ben Affleck;⭐⭐;16/01/2026
+CIN20182;Cinema 2010-2026;Quale film del 2010 è diretto da David Fincher e racconta la storia di un sito web sociale?;4 risposte;A) The Social Network, ###B) The Social Network, C) The Girl with the Dragon Tattoo, D) Gone Girl;⭐⭐;16/01/2026
+CIN20183;Cinema 2010-2026;La pellicola "The Social Network" ha vinto l'Oscar per la Migliore Sceneggiatura Non Originale: vero o falso?;Vero/Falso;Vero, ###Falso;⭐⭐;16/01/2026
+CIN20184;Cinema 2010-2026;Scrivi il nome dello sceneggiatore principale di "The Social Network".;Risposta aperta;###Aaron Sorkin;⭐⭐;16/01/2026
+CIN20185;Cinema 2010-2026;Quale film del 2019 è diretto da Sam Mendes e racconta la Prima Guerra Mondiale in un unico piano sequenza apparente?;4 risposte;A) Dunkirk, ###B) 1917, C) Saving Private Ryan, D) War Horse;⭐⭐⭐;16/01/2026
+CIN20186;Cinema 2010-2026;La pellicola "1917" è stata premiata per il montaggio e la fotografia agli Oscar.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20187;Cinema 2010-2026;Scrivi il nome del regista di "1917".;Risposta aperta;###Sam Mendes;⭐⭐;16/01/2026
+CIN20188;Cinema 2010-2026;Quale film del 2014 è diretto da Alejandro González Iñárritu e utilizza un piano sequenza per simulare una sola ripresa?;4 risposte;A) Birdman, ###B) Birdman, C) The Revenant, D) Babel;⭐⭐⭐;16/01/2026
+CIN20189;Cinema 2010-2026;La pellicola "Birdman" ha vinto l'Oscar per il Miglior Film nel 2015.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20190;Cinema 2010-2026;Scrivi il nome dell'attore protagonista in "Birdman".;Risposta aperta;###Michael Keaton;⭐⭐;16/01/2026
+CIN20191;Cinema 2010-2026;Quale film del 2016 è diretto da Mel Gibson e racconta la storia di un soldato obiettore di coscienza?;4 risposte;A) Hacksaw Ridge, ###B) La battaglia di Hacksaw Ridge, C) Braveheart, D) The Patriot;⭐⭐;16/01/2026
+CIN20192;Cinema 2010-2026;La pellicola "La battaglia di Hacksaw Ridge" ha vinto l'Oscar per il Miglior Montaggio: vero o falso?;Vero/Falso;Vero, ###Falso;⭐⭐;16/01/2026
+CIN20193;Cinema 2010-2026;Scrivi il nome del protagonista in "Hacksaw Ridge".;Risposta aperta;###Andrew Garfield;⭐⭐;16/01/2026
+CIN20194;Cinema 2010-2026;Quale film del 2017 è diretto da Christopher Nolan e gioca con la percezione del tempo?;4 risposte;A) Dunkirk, ###B) Dunkirk, C) Interstellar, D) Tenet;⭐⭐⭐;16/01/2026
+CIN20195;Cinema 2010-2026;La pellicola "Dunkirk" è ambientata durante la Seconda Guerra Mondiale.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20196;Cinema 2010-2026;Scrivi il nome del regista di "Dunkirk".;Risposta aperta;###Christopher Nolan;⭐⭐;16/01/2026
+CIN20197;Cinema 2010-2026;Quale film del 2020 è diretto da Chloé Zhao e racconta la vita dei nomadi americani moderni?;4 risposte;A) Nomadland, ###B) Nomadland, C) The Rider, D) Wild;⭐⭐⭐;16/01/2026
+CIN20198;Cinema 2010-2026;La pellicola "Nomadland" ha vinto l'Oscar per la Migliore Regia: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN20199;Cinema 2010-2026;Scrivi il nome dell'attrice protagonista in "Nomadland".;Risposta aperta;###Frances McDormand;⭐⭐;16/01/2026
+CIN20200;Cinema 2010-2026;Quale film del 2021 ha vinto l'Oscar per il Miglior Film e racconta la storia di una famiglia in crisi?;4 risposte;A) CODA, ###B) CODA, C) The Power of the Dog, D) Belfast;⭐⭐⭐;16/01/2026

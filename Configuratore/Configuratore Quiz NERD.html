@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Configurator Quiz NERD</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin:18px; color:#111 }
+    h1 { margin-bottom:6px }
+    .row { display:flex; gap:12px; align-items:center; margin-bottom:8px; flex-wrap:wrap }
+    label { font-weight:600; margin-right:6px }
+    select,input,textarea { padding:6px; border:1px solid #ccc; border-radius:4px }
+    .box { border:1px solid #e0e0e0; padding:12px; border-radius:6px; margin-bottom:12px }
+    button { background:#0b79d0; color:#fff; border:none; padding:10px 14px; border-radius:6px; cursor:pointer }
+    button.secondary { background:#666 }
+    .small { font-size:0.9em; color:#444 }
+    #viewer { position:fixed; inset:0; background:#000000cc; display:none; align-items:center; justify-content:center; z-index:9999 }
+    #slide { background:#fff; padding:30px; width:80%; max-width:1100px; height:80%; overflow:auto; border-radius:8px }
+    .controls { margin-top:12px; display:flex; gap:8px }
+    .list { max-height:220px; overflow:auto; border:1px solid #ddd; padding:8px; border-radius:6px; min-width:260px }
+    .flexcol { display:flex; flex-direction:column; gap:8px }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+  </style>
+
+  <!-- Librerie -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@7.2.0/build/index.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+</head>
+<body>
+  <h1>Configurator Quiz NERD</h1>
+
+  <div class="box">
+    <div class="row">
+      <label>Carica file Excel (.xlsx)</label>
+      <input id="fileInput" type="file" accept=".xlsx,.xls" />
+      <button id="loadBtn">Carica</button>
+      <span class="small">Ogni foglio è considerato una categoria</span>
+    </div>
+
+    <div id="metaArea" style="display:none">
+      <div class="grid2">
+        <div>
+          <label>TIPOLOGIE DOMANDE</label>
+          <div class="list" id="typesArea"></div>
+          <div class="small" style="margin-top:6px">Seleziona le tipologie desiderate; le percentuali saranno calcolate automaticamente.</div>
+        </div>
+
+        <div>
+          <label>CATEGORIE (foglio = categoria)</label>
+          <div class="list" id="catsArea"></div>
+          <div style="margin-top:8px">
+            <label>Carica preset categorie (file .txt, una categoria per riga)</label>
+            <input id="presetInput" type="file" accept=".txt" />
+            <button id="applyPresetBtn" class="secondary">Applica preset</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px" class="row">
+        <div>
+          <label>DIFFICOLTÀ</label>
+          <div style="display:flex; gap:8px; align-items:center; margin-left:6px">
+            <label><input type="checkbox" data-diff="all" id="diff_all" /> Tutte le difficoltà</label>
+            <label><input type="checkbox" data-diff="?" class="diffChk" /> Facili ?</label>
+            <label><input type="checkbox" data-diff="??" class="diffChk" /> Medie ??</label>
+            <label><input type="checkbox" data-diff="???" class="diffChk" /> Difficili ???</label>
+            <label><input type="checkbox" data-diff="????" class="diffChk" /> Estreme ????</label>
+          </div>
+        </div>
+
+        <div>
+          <label>ORDINAMENTO</label>
+          <div style="display:flex; gap:8px; align-items:center; margin-left:6px">
+            <select id="orderSelect">
+              <option value="random">Ordine casuale</option>
+              <option value="alpha_global">Ordine alfabetico (tutte le categorie)</option>
+              <option value="alpha_cat">Ordine alfabetico (categoria per categoria)</option>
+              <option value="difficulty">Ordine di difficoltà</option>
+            </select>
+            <label style="margin-left:6px"><input id="descCheckbox" type="checkbox" /> Decrescente</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px" class="row">
+        <button id="previewBtn">Anteprima conteggi</button>
+        <button id="exportBtn">Esporta file Word</button>
+        <button id="startGameBtn" class="secondary">Apri sessione di gioco</button>
+
+        <div style="margin-left:auto; display:flex; align-items:center; gap:8px">
+          <label>Totale Domande</label>
+          <input id="totalInput" type="number" min="1" value="25" style="width:90px" />
+        </div>
+      </div>
+
+      <div id="previewArea" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div id="viewer">
+    <div id="slide">
+      <div id="slideContent"></div>
+      <div class="controls">
+        <button id="prevQ">Indietro</button>
+        <button id="nextQ">Avanti</button>
+        <button id="fsBtn">Schermo intero</button>
+        <button id="closeViewer" class="secondary">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------- Stato ---------- */
+let workbookData = {}; // { sheetName: [rows] }
+let allTypes = ['4 Risposte','6 Risposte','Vero/Falso','Frase interrotta a 2 risposte','Continua la risposta','Risposta aperta'];
+let selectedQuestions = [];
+let allCategories = [];
+
+/* ---------- Utility ---------- */
+function parseRowObject(row, headers) {
+  const obj = {};
+  headers.forEach((h, i) => obj[h] = row[i] ?? "");
+  return obj;
+}
+function shuffleArray(a) {
+  for (let i=a.length-1;i>0;i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+}
+
+/* ---------- Caricamento Excel ---------- */
+document.getElementById('loadBtn').addEventListener('click', () => {
+  const f = document.getElementById('fileInput').files[0];
+  if (!f) return alert('Seleziona un file Excel');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target.result);
+    const wb = XLSX.read(data, {type:'array'});
+    workbookData = {};
+    allCategories = [];
+    wb.SheetNames.forEach(name => {
+      const ws = wb.Sheets[name];
+      const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:""});
+      if (json.length < 2) return;
+      const headers = json[0].map(h => String(h).trim());
+      const rows = json.slice(1).map(r => parseRowObject(r, headers));
+      // mappa colonne esatte: ID, Tema, Domanda, Tipologia, Risposta A..F, Difficoltà, Data Creazione
+      const normalized = rows.map(r => {
+        const norm = {};
+        norm.ID = r['ID'] || r['Id'] || r['id'] || "";
+        norm.Tema = r['Tema'] || r['tema'] || name;
+        norm.Domanda = r['Domanda'] || r['Question'] || r['Domanda?'] || "";
+        norm.Tipologia = r['Tipologia'] || r['Type'] || "";
+        norm.RispostaA = r['Risposta A'] || r['RispostaA'] || r['A'] || "";
+        norm.RispostaB = r['Risposta B'] || r['RispostaB'] || r['B'] || "";
+        norm.RispostaC = r['Risposta C'] || r['RispostaC'] || r['C'] || "";
+        norm.RispostaD = r['Risposta D'] || r['RispostaD'] || r['D'] || "";
+        norm.RispostaE = r['Risposta E'] || r['RispostaE'] || r['E'] || "";
+        norm.RispostaF = r['Risposta F'] || r['RispostaF'] || r['F'] || "";
+        norm.Difficolta = r['Difficoltà'] || r['Difficolta'] || r['Difficulty'] || "";
+        norm.Data = r['Data Creazione'] || r['Data'] || r['Date'] || "";
+        return norm;
+      });
+      workbookData[name] = normalized;
+      allCategories.push(name);
+    });
+    buildFiltersUI();
+    document.getElementById('metaArea').style.display = 'block';
+    alert('File caricato. Fogli trovati: ' + Object.keys(workbookData).length);
+  };
+  reader.readAsArrayBuffer(f);
+});
+
+/* ---------- Costruzione UI filtri ---------- */
+function buildFiltersUI() {
+  const typesArea = document.getElementById('typesArea');
+  const catsArea = document.getElementById('catsArea');
+  typesArea.innerHTML = ''; catsArea.innerHTML = '';
+  // Tipologie: checkbox (ordine fisso)
+  allTypes.forEach(t => {
+    const div = document.createElement('div');
+    div.innerHTML = `<label><input type="checkbox" data-type="${t}" class="typeChk" checked /> ${t}</label>`;
+    typesArea.appendChild(div);
+  });
+  // Categorie: checkbox per ogni sheet
+  allCategories.forEach(c => {
+    const div = document.createElement('div');
+    div.innerHTML = `<label><input type="checkbox" data-cat="${c}" class="catChk" checked /> ${c}</label>`;
+    catsArea.appendChild(div);
+  });
+}
+
+/* ---------- Preset categorie (.txt) ---------- */
+document.getElementById('applyPresetBtn').addEventListener('click', () => {
+  const f = document.getElementById('presetInput').files[0];
+  if (!f) return alert('Seleziona un file preset (.txt)');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const txt = e.target.result;
+    const lines = txt.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    // deseleziona tutte
+    document.querySelectorAll('.catChk').forEach(cb => cb.checked = false);
+    // seleziona quelle che matchano (case-insensitive)
+    lines.forEach(l => {
+      document.querySelectorAll('.catChk').forEach(cb => {
+        if (cb.dataset.cat.toLowerCase() === l.toLowerCase()) cb.checked = true;
+      });
+    });
+    alert('Preset applicato');
+  };
+  reader.readAsText(f, 'utf-8');
+});
+
+/* ---------- Filtri selezionati ---------- */
+function getSelectedFilters() {
+  // tipologie selezionate -> calcola % dietro le quinte
+  const typeChecks = Array.from(document.querySelectorAll('.typeChk')).filter(i=>i.checked).map(i=>i.dataset.type);
+  if (typeChecks.length === 0) throw new Error('Seleziona almeno una tipologia');
+  const typePct = {};
+  typeChecks.forEach(t => typePct[t] = 1 / typeChecks.length); // percentuale implicita
+
+  // categorie selezionate
+  const selectedCats = Array.from(document.querySelectorAll('.catChk')).filter(cb => cb.checked).map(cb => cb.dataset.cat);
+  if (selectedCats.length === 0) throw new Error('Seleziona almeno una categoria');
+
+  // difficoltà: multi-select; if 'all' checked, ignore others
+  const allDiff = document.getElementById('diff_all').checked;
+  const diffChecks = Array.from(document.querySelectorAll('.diffChk')).filter(i=>i.checked).map(i=>i.dataset.diff);
+  const diffs = allDiff ? ['all'] : (diffChecks.length ? diffChecks : ['all']);
+
+  // ordinamento
+  const order = document.getElementById('orderSelect').value;
+  const desc = document.getElementById('descCheckbox').checked;
+
+  // totale
+  const totalN = Math.max(1, parseInt(document.getElementById('totalInput').value || 0));
+
+  return { typePct, typeChecks, selectedCats, diffs, order, desc, totalN };
+}
+
+/* ---------- Costruzione pool e filtri ---------- */
+function filterPoolByDifficulty(pool, diffs) {
+  if (diffs.includes('all')) return pool;
+  return pool.filter(q => diffs.some(d => (q.Difficolta||'').includes(d)));
+}
+
+function buildPool(selectedCats, diffs) {
+  let pool = [];
+  selectedCats.forEach(cat => {
+    const arr = workbookData[cat] || [];
+    const filtered = filterPoolByDifficulty(arr, diffs);
+    filtered.forEach(q => {
+      const copy = Object.assign({}, q);
+      copy._category = cat;
+      pool.push(copy);
+    });
+  });
+  return pool;
+}
+
+/* ---------- Allocazione e sampling ---------- */
+function allocateCounts(N, typePct, typeChecks, selectedCats, pool) {
+  // target per tipo
+  const targetType = {};
+  typeChecks.forEach(t => targetType[t] = Math.round(N * (typePct[t] || 0)));
+  // adjust to sum N
+  let sum = Object.values(targetType).reduce((a,b)=>a+b,0);
+  while (sum !== N) {
+    const diff = N - sum;
+    const key = typeChecks[Math.abs(diff) % typeChecks.length];
+    targetType[key] += Math.sign(diff);
+    sum = Object.values(targetType).reduce((a,b)=>a+b,0);
+  }
+  // per cell (tipo x categoria) proportional to availability
+  const perCellTargets = {};
+  typeChecks.forEach(t => {
+    perCellTargets[t] = {};
+    const poolType = pool.filter(q => (q.Tipologia||'').trim() === t);
+    const countsByCat = {};
+    selectedCats.forEach(c => countsByCat[c] = poolType.filter(q=>q._category===c).length);
+    const totalAvailable = Object.values(countsByCat).reduce((a,b)=>a+b,0);
+    if (totalAvailable === 0) {
+      selectedCats.forEach(c => perCellTargets[t][c] = 0);
+    } else {
+      selectedCats.forEach(c => {
+        perCellTargets[t][c] = Math.round(targetType[t] * (countsByCat[c] / totalAvailable));
+      });
+      // adjust to match targetType[t]
+      let s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
+      while (s !== targetType[t]) {
+        const diff = targetType[t] - s;
+        const cat = selectedCats[Math.abs(diff) % selectedCats.length];
+        perCellTargets[t][cat] += Math.sign(diff);
+        s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
+      }
+    }
+  });
+  return { targetType, perCellTargets };
+}
+
+function sampleQuestions(perCellTargets, pool) {
+  const chosen = [];
+  const usedIDs = new Set();
+  for (const t of Object.keys(perCellTargets)) {
+    for (const c of Object.keys(perCellTargets[t])) {
+      const need = perCellTargets[t][c];
+      if (need <= 0) continue;
+      const candidates = pool.filter(q => (q.Tipologia||'').trim()===t && q._category===c && !usedIDs.has(q.ID));
+      shuffleArray(candidates);
+      const take = candidates.slice(0, need);
+      take.forEach(q => { chosen.push(q); usedIDs.add(q.ID); });
+    }
+  }
+  return { chosen, usedIDs };
+}
+
+function fillRemaining(N, chosen, pool, usedIDs) {
+  let remaining = N - chosen.length;
+  if (remaining <= 0) return chosen;
+  const candidates = pool.filter(q => !usedIDs.has(q.ID));
+  shuffleArray(candidates);
+  const take = candidates.slice(0, remaining);
+  take.forEach(q => chosen.push(q));
+  return chosen;
+}
+
+/* ---------- Anteprima conteggi ---------- */
+document.getElementById('previewBtn').addEventListener('click', () => {
+  try {
+    const cfg = getSelectedFilters();
+    const pool = buildPool(cfg.selectedCats, cfg.diffs);
+    const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
+    const preview = document.getElementById('previewArea');
+    preview.innerHTML = `<div class="box"><strong>Pool totale disponibile:</strong> ${pool.length} domande<br>
+      <strong>Target per tipologia:</strong> ${JSON.stringify(alloc.targetType)}<br>
+      <strong>Target per cella (tipo x categoria):</strong><pre>${JSON.stringify(alloc.perCellTargets,null,2)}</pre></div>`;
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+/* ---------- Esportazione e apertura sessione di gioco ---------- */
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  try {
+    const cfg = getSelectedFilters();
+    const pool = buildPool(cfg.selectedCats, cfg.diffs);
+    if (pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
+    const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
+    let { chosen, usedIDs } = sampleQuestions(alloc.perCellTargets, pool);
+    chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
+
+    // ordering
+    if (cfg.order === 'random') shuffleArray(chosen);
+    else if (cfg.order === 'alpha_global') chosen.sort((a,b)=> (a.Domanda||'').localeCompare(b.Domanda||''));
+    else if (cfg.order === 'alpha_cat') chosen.sort((a,b)=> {
+      if (a._category !== b._category) return a._category.localeCompare(b._category);
+      return (a.Domanda||'').localeCompare(b.Domanda||'');
+    });
+    else if (cfg.order === 'difficulty') chosen.sort((a,b)=> (a.Difficolta||'').length - (b.Difficolta||'').length);
+    if (cfg.desc) chosen.reverse();
+
+    selectedQuestions = chosen.slice(0, cfg.totalN);
+
+    await generateDocx(selectedQuestions, cfg);
+    openViewer(selectedQuestions);
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+/* ---------- Generazione .docx (docx library) ---------- */
+async function generateDocx(questions, cfg) {
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel } = docx;
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children: [
+        new Paragraph({ text: "Quiz esportato", heading: HeadingLevel.TITLE }),
+        new Paragraph({ text: `Totale domande: ${questions.length}` }),
+        new Paragraph({ text: `Filtri: Difficoltà=${cfg.diffs.join(',')}, Ordinamento=${cfg.order}, Decrescente=${cfg.desc}` }),
+        new Paragraph({ text: " " })
+      ]
+    }]
+  });
+
+  const body = doc.sections[0].children;
+  questions.forEach((q, idx) => {
+    const qText = `${idx+1}. ${q.Domanda}`;
+    body.push(new Paragraph({ text: qText, spacing: { after: 200 } }));
+    // risposte da colonne A..F
+    const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
+    if (answers.length > 0) {
+      answers.forEach((a, i) => {
+        body.push(new Paragraph({ text: `   ${String.fromCharCode(65+i)}) ${a}` }));
+      });
+    } else {
+      body.push(new Paragraph({ text: "   [Risposta aperta]" }));
+    }
+    body.push(new Paragraph({ text: " " }));
+  });
+
+  // appendice soluzioni: cerco se la risposta corretta è marcata con ### all'interno delle risposte (se presente)
+  body.push(new Paragraph({ text: "Appendice soluzioni", heading: HeadingLevel.HEADING_2 }));
+  questions.forEach((q, idx) => {
+    // cerca '###' in risposte
+    const answersRaw = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF];
+    let sol = "[non specificata]";
+    for (let i=0;i<answersRaw.length;i++){
+      if ((answersRaw[i]||'').includes('###')) {
+        sol = String.fromCharCode(65+i);
+        break;
+      }
+    }
+    body.push(new Paragraph({ text: `${idx+1}. ${sol}` }));
+  });
+
+  const packer = new Packer();
+  const blob = await packer.toBlob(doc);
+  saveAs(blob, `quiz_export_${Date.now()}.docx`);
+}
+
+/* ---------- Viewer sessione di gioco ---------- */
+let currentIndex = 0;
+function openViewer(questions) {
+  currentIndex = 0;
+  document.getElementById('viewer').style.display = 'flex';
+  renderSlide();
+}
+function renderSlide() {
+  const container = document.getElementById('slideContent');
+  const q = selectedQuestions[currentIndex];
+  const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
+  container.innerHTML = `<h2>Domanda ${currentIndex+1} / ${selectedQuestions.length}</h2>
+    <h3>${escapeHtml(q.Domanda)}</h3>
+    <div style="margin-top:12px">${answers.length ? answers.map((a,i)=>`<div style="margin:6px 0"><strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(a)}</div>`).join('') : '<em>Risposta aperta</em>'}</div>
+    <div style="margin-top:12px; color:#666">Categoria: ${escapeHtml(q._category)} • Tipologia: ${escapeHtml(q.Tipologia)} • Difficoltà: ${escapeHtml(q.Difficolta)}</div>`;
+}
+document.getElementById('nextQ').addEventListener('click', ()=> {
+  if (currentIndex < selectedQuestions.length-1) currentIndex++;
+  renderSlide();
+});
+document.getElementById('prevQ').addEventListener('click', ()=> {
+  if (currentIndex > 0) currentIndex--;
+  renderSlide();
+});
+document.getElementById('closeViewer').addEventListener('click', ()=> {
+  document.getElementById('viewer').style.display = 'none';
+});
+document.getElementById('fsBtn').addEventListener('click', ()=> {
+  const el = document.getElementById('slide');
+  if (el.requestFullscreen) el.requestFullscreen();
+});
+
+/* ---------- Apri sessione senza esportare ---------- */
+document.getElementById('startGameBtn').addEventListener('click', () => {
+  try {
+    const cfg = getSelectedFilters();
+    const pool = buildPool(cfg.selectedCats, cfg.diffs);
+    if (pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
+    shuffleArray(pool);
+    selectedQuestions = pool.slice(0, cfg.totalN);
+    openViewer(selectedQuestions);
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+/* ---------- Helpers ---------- */
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+ID;Tema;Domanda;Tipologia;Risposte;Difficoltà;Data creazione
+CIN80001;Cinema '80;Quale film del 1982 è ambientato in una Los Angeles futuristica e diretto da Ridley Scott?;4 risposte;A) Blade Runner, B) Ritorno al futuro, ###C) Blade Runner, D) The Thing;⭐⭐⭐;16/01/2026
+CIN80002;Cinema '80;Chi ha diretto "Ritorno al futuro" (1985)?;4 risposte;A) Robert Zemeckis, ###B) Robert Zemeckis, C) Steven Spielberg, D) John Hughes;⭐⭐;16/01/2026
+CIN80003;Cinema '80;"E.T. l'extra-terrestre" è un film diretto da Steven Spielberg.;Vero/Falso;###Vero, Falso;⭐;16/01/2026
+CIN80004;Cinema '80;Quale attore interpreta Marty McFly in "Ritorno al futuro"?;4 risposte;A) Michael J. Fox, B) Tom Cruise, C) Matthew Broderick, ###D) Michael J. Fox;⭐⭐;16/01/2026
+CIN80005;Cinema '80;Scrivi il nome del regista di "Blade Runner".;Risposta aperta;###Ridley Scott;⭐⭐⭐;16/01/2026
+CIN80006;Cinema '80;Quale film del 1986 ha come protagonista un pilota della Marina e divenne un cult per le scene d'azione aeree?;4 risposte;A) Top Gun, ###B) Top Gun, C) The Right Stuff, D) Iron Eagle;⭐⭐;16/01/2026
+CIN80007;Cinema '80;Il film "Full Metal Jacket" (1987) è diretto da Stanley Kubrick.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80008;Cinema '80;Quale film del 1984 ha introdotto il personaggio di Sarah Connor?;4 risposte;A) Terminator, B) Aliens, ###C) Terminator, D) Robocop;⭐⭐;16/01/2026
+CIN80009;Cinema '80;Chi ha diretto "The Shining" (1980)?;4 risposte;A) Alfred Hitchcock, ###B) Stanley Kubrick, C) John Carpenter, D) David Lynch;⭐⭐⭐;16/01/2026
+CIN80010;Cinema '80;Scrivi il nome dell'attore che interpreta il protagonista in "The Shining".;Risposta aperta;###Jack Nicholson;⭐⭐;16/01/2026
+CIN80011;Cinema '80;La pellicola "Guerre stellari: L'Impero colpisce ancora" è uscita nel 1980.;Vero/Falso;###Vero, Falso;⭐;16/01/2026
+CIN80012;Cinema '80;Quale film del 1981 ha come protagonista un archeologo-avventuriero interpretato da Harrison Ford?;4 risposte;A) I predatori dell'arca perduta, B) Indiana Jones e il tempio maledetto, ###C) I predatori dell'arca perduta, D) Indiana Jones e l'ultima crociata;⭐⭐;16/01/2026
+CIN80013;Cinema '80;Scrivi il nome del regista di "I predatori dell'arca perduta".;Risposta aperta;###Steven Spielberg;⭐⭐⭐;16/01/2026
+CIN80014;Cinema '80;Quale film del 1985 racconta le avventure di un gruppo di ragazzi alla ricerca di un tesoro?;4 risposte;A) Stand by Me, B) The Goonies, ###C) I Goonies, D) The Lost Boys;⭐⭐;16/01/2026
+CIN80015;Cinema '80;La colonna sonora di "Lo squalo" è stata composta da John Williams.;Vero/Falso;###Vero, Falso;⭐;16/01/2026
+CIN80016;Cinema '80;Chi ha diretto "Blade Runner" (1982)?;4 risposte;A) Ridley Scott, B) James Cameron, ###C) Ridley Scott, D) Terry Gilliam;⭐⭐;16/01/2026
+CIN80017;Cinema '80;Quale film del 1987 è ambientato durante la guerra in Vietnam e diretto da Oliver Stone?;4 risposte;A) Platoon, ###B) Platoon, C) Full Metal Jacket, D) Born on the Fourth of July;⭐⭐⭐;16/01/2026
+CIN80018;Cinema '80;Scrivi il nome dell'attore protagonista in "Top Gun".;Risposta aperta;###Tom Cruise;⭐⭐;16/01/2026
+CIN80019;Cinema '80;La pellicola "Aliens - Scontro finale" (1986) è il seguito di "Alien".;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80020;Cinema '80;Quale film del 1984 ha come protagonista un cyborg poliziotto in una Detroit futuristica?;4 risposte;A) Robocop, B) The Terminator, ###C) Robocop, D) Blade Runner;⭐⭐;16/01/2026
+CIN80021;Cinema '80;Scrivi il nome del regista di "The Terminator".;Risposta aperta;###James Cameron;⭐⭐⭐;16/01/2026
+CIN80022;Cinema '80;Quale film del 1980 è tratto da un romanzo di Stephen King e diretto da Stanley Kubrick?;4 risposte;A) L'esorcista, B) Carrie, ###C) Shining, D) The Dead Zone;⭐⭐;16/01/2026
+CIN80023;Cinema '80;La pellicola "Scarface" con Al Pacino è del 1983.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80024;Cinema '80;Quale film del 1986 è un adattamento del romanzo di Stephen King su un uomo che diventa un mostro?;4 risposte;A) The Fly, B) Stand by Me, C) The Thing, ###D) The Fly;⭐⭐;16/01/2026
+CIN80025;Cinema '80;Scrivi il nome del regista di "Ritorno al futuro".;Risposta aperta;###Robert Zemeckis;⭐⭐;16/01/2026
+CIN80026;Cinema '80;Quale film del 1985 è diretto da Robert Zemeckis e vede un adolescente viaggiare nel tempo?;4 risposte;A) Back to the Future Part II, ###B) Ritorno al futuro, C) The Terminator, D) The Goonies;⭐⭐;16/01/2026
+CIN80027;Cinema '80;La pellicola "Il ritorno del re" è degli anni '80.;Vero/Falso;Vero, ###Falso;⭐⭐;16/01/2026
+CIN80028;Cinema '80;Quale film del 1984 ha come protagonista un giovane apprendista di karate che affronta un bullo?;4 risposte;A) The Karate Kid, ###B) Karate Kid, C) Rocky, D) Bloodsport;⭐⭐;16/01/2026
+CIN80029;Cinema '80;Scrivi il nome dell'attore che interpreta John Rambo nella serie iniziata negli anni '80.;Risposta aperta;###Sylvester Stallone;⭐⭐;16/01/2026
+CIN80030;Cinema '80;Quale film del 1982 è un horror fantascientifico diretto da John Carpenter e ambientato in Antartide?;4 risposte;A) The Thing, ###B) The Thing, C) The Fly, D) Poltergeist;⭐⭐⭐;16/01/2026
+CIN80031;Cinema '80;La pellicola "La storia infinita" è uscita negli anni '80.;Vero/Falso;###Vero, Falso;⭐;16/01/2026
+CIN80032;Cinema '80;Quale film del 1988 è diretto da John McTiernan e ambientato in un grattacielo di Los Angeles?;4 risposte;A) Die Hard, B) Lethal Weapon, ###C) Die Hard, D) Predator;⭐⭐;16/01/2026
+CIN80033;Cinema '80;Scrivi il nome del regista di "Blade Runner".;Risposta aperta;###Ridley Scott;⭐⭐;16/01/2026
+CIN80034;Cinema '80;Quale film del 1989 conclude la trilogia di Indiana Jones iniziata negli anni '80?;4 risposte;A) Indiana Jones e il tempio maledetto, B) I predatori dell'arca perduta, ###C) Indiana Jones e l'ultima crociata, D) Indiana Jones e il regno del teschio di cristallo;⭐⭐;16/01/2026
+CIN80035;Cinema '80;La pellicola "Platoon" (1986) è diretta da Oliver Stone.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80036;Cinema '80;Quale film del 1984 è diretto da David Lynch e presenta atmosfere oniriche?;4 risposte;A) Blue Velvet, B) The Elephant Man, ###C) Dune, D) Blue Velvet;⭐⭐⭐;16/01/2026
+CIN80037;Cinema '80;Scrivi il nome dell'attore che interpreta il protagonista in "Die Hard".;Risposta aperta;###Bruce Willis;⭐⭐;16/01/2026
+CIN80038;Cinema '80;Quale film del 1987 è diretto da David Fincher?;4 risposte;A) Se7en, B) Fight Club, C) Zodiac, ###D) Nessuno (David Fincher debutta negli anni '90);⭐⭐;16/01/2026
+CIN80039;Cinema '80;La pellicola "Cinema Paradiso" è uscita nel 1988 ed è diretta da Giuseppe Tornatore.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80040;Cinema '80;Quale film del 1986 è tratto da un romanzo di Stephen King e diretto da David Cronenberg?;4 risposte;A) The Fly, ###B) La mosca, C) Stand by Me, D) Misery;⭐⭐;16/01/2026
+CIN80041;Cinema '80;Scrivi il nome del regista di "Scarface" (1983).;Risposta aperta;###Brian De Palma;⭐⭐;16/01/2026
+CIN80042;Cinema '80;Quale film del 1985 è diretto da Terry Gilliam e basato su un romanzo di Douglas Adams?;4 risposte;A) Brazil, B) The Adventures of Baron Munchausen, ###C) Nessuno (Gilliam non ha diretto un adattamento di Douglas Adams negli anni '80), D) Time Bandits;⭐⭐;16/01/2026
+CIN80043;Cinema '80;La pellicola "La città incantata" è del 2001, non degli anni '80.;Vero/Falso;Vero, ###Falso;⭐⭐;16/01/2026
+CIN80044;Cinema '80;Quale film del 1984 è diretto da John Carpenter e ha come protagonista Kurt Russell?;4 risposte;A) The Thing, ###B) The Thing, C) Escape from New York, D) Big Trouble in Little China;⭐⭐;16/01/2026
+CIN80045;Cinema '80;Scrivi il nome dell'autore del romanzo da cui è tratto "Shining".;Risposta aperta;###Stephen King;⭐⭐;16/01/2026
+CIN80046;Cinema '80;Quale film del 1980 è diretto da Martin Scorsese e racconta la vita di una donna che lascia il marito?;4 risposte;A) Taxi Driver, B) Alice non abita più qui, ###C) Alice non abita più qui, D) Raging Bull;⭐⭐;16/01/2026
+CIN80047;Cinema '80;La pellicola "Fuga di mezzanotte" è degli anni '70, non degli '80.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80048;Cinema '80;Quale film del 1985 è diretto da Robert Zemeckis e ha come protagonista un ragazzo che viaggia nel tempo con una DeLorean?;4 risposte;A) Ritorno al futuro, ###B) Ritorno al futuro, C) Back to the Future Part II, D) The Terminator;⭐⭐;16/01/2026
+CIN80049;Cinema '80;Scrivi il nome del compositore della colonna sonora di "Blade Runner".;Risposta aperta;###Vangelis;⭐⭐⭐;16/01/2026
+CIN80050;Cinema '80;Quale film del 1982 è diretto da Steven Spielberg e racconta l'incontro tra umani e alieni?;4 risposte;A) Incontri ravvicinati del terzo tipo, B) E.T. l'extra-terrestre, ###C) E.T. l'extra-terrestre, D) Close Encounters of the Third Kind;⭐⭐;16/01/2026
+CIN80051;Cinema '80;La pellicola "I Goonies" è uscita nel 1985.;Vero/Falso;###Vero, Falso;⭐;16/01/2026
+CIN80052;Cinema '80;Quale film del 1987 è diretto da John Hughes e racconta le vicende di adolescenti in una scuola?;4 risposte;A) The Breakfast Club, ###B) The Breakfast Club, C) Ferris Bueller's Day Off, D) Pretty in Pink;⭐⭐;16/01/2026
+CIN80053;Cinema '80;Scrivi il nome dell'attore che interpreta Tony Montana in "Scarface".;Risposta aperta;###Al Pacino;⭐⭐;16/01/2026
+CIN80054;Cinema '80;Quale film del 1984 è diretto da John Hughes e racconta la storia di un gruppo di adolescenti in una giornata?;4 risposte;A) The Breakfast Club, B) Ferris Bueller's Day Off, ###C) Sixteen Candles, D) The Breakfast Club;⭐⭐;16/01/2026
+CIN80055;Cinema '80;La pellicola "La storia infinita" è tratta da un romanzo di Michael Ende.;Vero/Falso;###Vero, Falso;⭐;16/01/2026
+CIN80056;Cinema '80;Quale film del 1986 è diretto da David Lynch e presenta atmosfere surreali?;4 risposte;A) Blue Velvet, B) Dune, ###C) Blue Velvet, D) The Elephant Man;⭐⭐⭐;16/01/2026
+CIN80057;Cinema '80;Scrivi il nome del regista di "Platoon".;Risposta aperta;###Oliver Stone;⭐⭐;16/01/2026
+CIN80058;Cinema '80;Quale film del 1983 è diretto da Brian De Palma e racconta la storia di un immigrato cubano a Miami?;4 risposte;A) Scarface, ###B) Scarface, C) The Untouchables, D) Carlito's Way;⭐⭐;16/01/2026
+CIN80059;Cinema '80;La pellicola "Mad Max 2 - Il guerriero della strada" è uscita nel 1981.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80060;Cinema '80;Quale film del 1988 combina animazione e live-action con un coniglio investigatore?;4 risposte;A) Chi ha incastrato Roger Rabbit?, ###B) Chi ha incastrato Roger Rabbit?, C) Who Framed Roger Rabbit, D) Space Jam;⭐⭐;16/01/2026
+CIN80061;Cinema '80;Scrivi il nome dell'autore del romanzo da cui è tratto "Blade Runner" (Do Androids Dream of Electric Sheep?).;Risposta aperta;###Philip K. Dick;⭐⭐⭐;16/01/2026
+CIN80062;Cinema '80;Quale film del 1984 è diretto da John Carpenter e presenta un'ambientazione urbana distopica?;4 risposte;A) Escape from New York, ###B) Escape from New York, C) The Thing, D) They Live;⭐⭐;16/01/2026
+CIN80063;Cinema '80;La pellicola "La mosca" (1986) è un remake diretto da David Cronenberg.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80064;Cinema '80;Quale film del 1985 è diretto da Steven Spielberg e racconta la storia di un gruppo di ragazzi che trovano una mappa del tesoro?;4 risposte;A) The Goonies, ###B) I Goonies, C) Stand by Me, D) The Lost Boys;⭐⭐;16/01/2026
+CIN80065;Cinema '80;Scrivi il nome del protagonista di "Ritorno al futuro".;Risposta aperta;###Marty McFly;⭐⭐;16/01/2026
+CIN80066;Cinema '80;Quale film del 1982 è diretto da Steven Spielberg e racconta la storia di un ragazzo e un alieno amichevole?;4 risposte;A) E.T. l'extra-terrestre, ###B) E.T. l'extra-terrestre, C) Close Encounters, D) The Goonies;⭐⭐;16/01/2026
+CIN80067;Cinema '80;La pellicola "Il nome della rosa" è uscita nel 1986 ed è diretta da Jean-Jacques Annaud.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80068;Cinema '80;Quale film del 1980 è diretto da Francis Ford Coppola e ambientato durante la guerra del Vietnam?;4 risposte;A) Apocalypse Now, ###B) Apocalypse Now, C) The Deer Hunter, D) Platoon;⭐⭐⭐;16/01/2026
+CIN80069;Cinema '80;Scrivi il nome dell'attore che interpreta Indiana Jones.;Risposta aperta;###Harrison Ford;⭐⭐;16/01/2026
+CIN80070;Cinema '80;Quale film del 1987 è diretto da John Hughes e racconta la storia di un gruppo di adolescenti che si incontrano in biblioteca?;4 risposte;A) Ferris Bueller's Day Off, ###B) The Breakfast Club, C) Pretty in Pink, D) Sixteen Candles;⭐⭐;16/01/2026
+CIN80071;Cinema '80;La pellicola "Il cacciatore" è degli anni '70, non degli '80.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80072;Cinema '80;Quale film del 1989 è diretto da Tim Burton e ha come protagonista un uomo con forbici al posto delle mani?;4 risposte;A) Edward mani di forbice, ###B) Edward mani di forbice, C) Batman, D) Beetlejuice;⭐⭐;16/01/2026
+CIN80073;Cinema '80;Scrivi il nome del regista di "Scarface".;Risposta aperta;###Brian De Palma;⭐⭐;16/01/2026
+CIN80074;Cinema '80;Quale film del 1984 è diretto da Richard Donner e presenta un gruppo di giovani avventurieri?;4 risposte;A) The Goonies, B) Gremlins, ###C) I Goonies, D) Back to the Future;⭐⭐;16/01/2026
+CIN80075;Cinema '80;La pellicola "Stand by Me - Ricordo di un'estate" è basata su un racconto di Stephen King.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80076;Cinema '80;Quale film del 1982 è diretto da Ridley Scott e ha come protagonista Harrison Ford?;4 risposte;A) Blade Runner, B) Alien, ###C) Blade Runner, D) The Right Stuff;⭐⭐;16/01/2026
+CIN80077;Cinema '80;Scrivi il nome dell'autore del romanzo da cui è tratto "Il nome della rosa".;Risposta aperta;###Umberto Eco;⭐⭐;16/01/2026
+CIN80078;Cinema '80;Quale film del 1986 è diretto da Oliver Stone e racconta la guerra in Vietnam dal punto di vista dei soldati?;4 risposte;A) Full Metal Jacket, ###B) Platoon, C) Born on the Fourth of July, D) The Deer Hunter;⭐⭐;16/01/2026
+CIN80079;Cinema '80;La pellicola "Chi ha incastrato Roger Rabbit?" combina animazione e live-action.;Vero/Falso;###Vero, Falso;⭐;16/01/2026
+CIN80080;Cinema '80;Quale film del 1985 è diretto da Terry Gilliam e presenta un mondo distopico burocratico?;4 risposte;A) Brazil, ###B) Brazil, C) Time Bandits, D) The Fisher King;⭐⭐⭐;16/01/2026
+CIN80081;Cinema '80;Scrivi il nome del protagonista di "Scarface".;Risposta aperta;###Tony Montana;⭐⭐;16/01/2026
+CIN80082;Cinema '80;Quale film del 1981 è diretto da Steven Spielberg e racconta la vita di un gruppo di adolescenti negli anni '60?;4 risposte;A) The Goonies, B) Stand by Me, ###C) American Graffiti (1973 non 1981), D) E.T.;⭐⭐;16/01/2026
+CIN80083;Cinema '80;La pellicola "Il ritorno dello Jedi" è del 1983.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80084;Cinema '80;Quale film del 1984 è diretto da John Carpenter e ha Kurt Russell come protagonista?;4 risposte;A) Big Trouble in Little China, ###B) Big Trouble in Little China, C) The Thing, D) Escape from New York;⭐⭐;16/01/2026
+CIN80085;Cinema '80;Scrivi il nome del compositore della colonna sonora di "E.T. l'extra-terrestre".;Risposta aperta;###John Williams;⭐⭐;16/01/2026
+CIN80086;Cinema '80;Quale film del 1987 è diretto da Jonathan Demme e racconta la storia di un serial killer?;4 risposte;A) The Silence of the Lambs (1991), ###B) Nessuno (The Silence of the Lambs è 1991), C) Manhunter, D) The Accused;⭐⭐;16/01/2026
+CIN80087;Cinema '80;La pellicola "Il nome della rosa" è ambientata in un monastero medievale.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80088;Cinema '80;Quale film del 1980 è diretto da David Lynch e racconta la storia di un uomo deforme in un circo?;4 risposte;A) The Elephant Man, ###B) The Elephant Man, C) Blue Velvet, D) Eraserhead;⭐⭐;16/01/2026
+CIN80089;Cinema '80;Scrivi il nome del regista di "Rambo: First Blood" (1982).;Risposta aperta;###Ted Kotcheff;⭐⭐;16/01/2026
+CIN80090;Cinema '80;Quale film del 1985 è diretto da John Hughes e racconta la storia di un ragazzo che finge malattia per saltare la scuola?;4 risposte;A) The Breakfast Club, ###B) Ferris Bueller's Day Off, C) Pretty in Pink, D) Sixteen Candles;⭐⭐;16/01/2026
+CIN80091;Cinema '80;La pellicola "Il cacciatore" è ambientata durante la guerra del Vietnam: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80092;Cinema '80;Quale film del 1989 è diretto da Tim Burton e racconta la storia di un uomo con forbici al posto delle mani?;4 risposte;A) Beetlejuice, B) Batman, ###C) Edward mani di forbice, D) Mars Attacks!;⭐⭐;16/01/2026
+CIN80093;Cinema '80;Scrivi il nome dell'attore che interpreta il protagonista in "Scarface".;Risposta aperta;###Al Pacino;⭐⭐;16/01/2026
+CIN80094;Cinema '80;Quale film del 1982 è diretto da Steven Spielberg e racconta la storia di un ragazzo e un alieno?;4 risposte;A) E.T. l'extra-terrestre, ###B) E.T. l'extra-terrestre, C) Close Encounters, D) The Goonies;⭐⭐;16/01/2026
+CIN80095;Cinema '80;La pellicola "Apocalypse Now" è stata diretta da Francis Ford Coppola.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80096;Cinema '80;Quale film del 1984 è diretto da James Cameron e ha come antagonista un cyborg inviato dal futuro?;4 risposte;A) Robocop, B) Aliens, ###C) The Terminator, D) The Fly;⭐⭐;16/01/2026
+CIN80097;Cinema '80;Scrivi il nome del regista di "The Thing" (1982).;Risposta aperta;###John Carpenter;⭐⭐;16/01/2026
+CIN80098;Cinema '80;Quale film del 1986 è diretto da David Cronenberg e racconta la trasformazione di uno scienziato?;4 risposte;A) The Fly, ###B) La mosca, C) Videodrome, D) Scanners;⭐⭐;16/01/2026
+CIN80099;Cinema '80;La pellicola "Cinema Paradiso" ha vinto l'Oscar per il miglior film straniero.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN80100;Cinema '80;Quale film del 1984 è diretto da Richard Donner e prodotto da Steven Spielberg che racconta un'avventura per ragazzi?;4 risposte;A) Gremlins, B) Back to the Future, ###C) I Goonies, D) The NeverEnding Story;⭐⭐;16/01/2026

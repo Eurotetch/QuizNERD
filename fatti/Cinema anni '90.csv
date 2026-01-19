@@ -1,0 +1,101 @@
+ID;Tema;Domanda;Tipologia;Risposte;Difficoltà;Data creazione
+CIN90001;Cinema '90;Quale film del 1994 ha come protagonista un uomo che racconta la sua vita seduto su una panchina?;4 risposte;###A) Forrest Gump, B) Pulp Fiction, C) Il silenzio degli innocenti, D) Braveheart;⭐⭐;16/01/2026
+CIN90002;Cinema '90;Chi ha diretto "Pulp Fiction" (1994)?;4 risposte;A) Steven Spielberg, ###B) Quentin Tarantino, C) Martin Scorsese, D) David Fincher;⭐⭐⭐;16/01/2026
+CIN90003;Cinema '90;La pellicola "Il silenzio degli innocenti" ha vinto l'Oscar per il Miglior Film nel 1992.;Vero/Falso;Vero, ###Falso;⭐⭐;16/01/2026
+CIN90004;Cinema '90;Quale film del 1999 è noto per la frase "What we do in life echoes in eternity" nella versione italiana?;4 risposte;A) Fight Club, B) Matrix, ###C) Il gladiatore, D) American Beauty;⭐⭐⭐;16/01/2026
+CIN90005;Cinema '90;Scrivi il nome del regista di "Il paziente inglese".;Risposta aperta;###Anthony Minghella;⭐⭐⭐;16/01/2026
+CIN90006;Cinema '90;Quale film del 1997 racconta la storia di un transatlantico affondato?;4 risposte;A) Titanic, B) Il ponte delle spie, C) La sottile linea rossa, ###D) Titanic;⭐⭐;16/01/2026
+CIN90007;Cinema '90;La pellicola "Trainspotting" (1996) è diretta da Danny Boyle.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90008;Cinema '90;Chi ha diretto "Il paziente inglese" (1996)?;4 risposte;A) Ridley Scott, B) Steven Soderbergh, ###C) Anthony Minghella, D) Robert Altman;⭐⭐⭐;16/01/2026
+CIN90009;Cinema '90;Quale film del 1993 è un adattamento del romanzo di Jane Austen "Ragione e sentimento"?;4 risposte;A) Ragione e sentimento, ###B) Ragione e sentimento, C) Emma, D) Orgoglio e pregiudizio;⭐⭐;16/01/2026
+CIN90010;Cinema '90;Scrivi il nome dell'attore che interpreta il protagonista in "Forrest Gump".;Risposta aperta;###Tom Hanks;⭐⭐;16/01/2026
+CIN90011;Cinema '90;La pellicola "Il paziente inglese" ha vinto l'Oscar per il Miglior Film nel 1997.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90012;Cinema '90;Quale film del 1999 è famoso per la scena in cui il protagonista scopre che la sua realtà è simulata?;4 risposte;A) Fight Club, ###B) Matrix, C) American Beauty, D) The Sixth Sense;⭐⭐⭐;16/01/2026
+CIN90013;Cinema '90;Scrivi il nome del regista di "Matrix".;Risposta aperta;###Lana e Lilly Wachowski;⭐⭐⭐;16/01/2026
+CIN90014;Cinema '90;Quale film del 1995 è diretto da Mel Gibson e racconta la vendetta di un uomo contro i suoi nemici?;4 risposte;A) Braveheart, ###B) Braveheart, C) Il patriota, D) L'uomo senza volto;⭐⭐⭐;16/01/2026
+CIN90015;Cinema '90;La pellicola "Il grande Lebowski" è uscita nel 1998.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90016;Cinema '90;Chi ha diretto "Il grande Lebowski" (1998)?;4 risposte;A) Joel Coen, ###B) Joel e Ethan Coen, C) Martin Scorsese, D) David Lynch;⭐⭐;16/01/2026
+CIN90017;Cinema '90;Quale film del 1994 è diretto da Robert Zemeckis e racconta la storia di un uomo che corre attraverso eventi storici?;4 risposte;A) Forrest Gump, B) Il miglio verde, C) Cast Away, ###D) Forrest Gump;⭐⭐;16/01/2026
+CIN90018;Cinema '90;Scrivi il nome dell'attrice protagonista in "Il silenzio degli innocenti".;Risposta aperta;###Jodie Foster;⭐⭐;16/01/2026
+CIN90019;Cinema '90;La pellicola "American Beauty" (1999) ha vinto l'Oscar per il Miglior Film.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90020;Cinema '90;Quale film del 1990 è diretto da Martin Scorsese e racconta la storia di un pugile?;4 risposte;A) Toro scatenato, B) Raging Bull, ###C) Quei bravi ragazzi, D) Goodfellas;⭐⭐;16/01/2026
+CIN90021;Cinema '90;Scrivi il nome del regista di "American Beauty".;Risposta aperta;###Sam Mendes;⭐⭐⭐;16/01/2026
+CIN90022;Cinema '90;Quale film del 1997 è diretto da Paul Thomas Anderson e racconta la vita di una famiglia nella California degli anni '70?;4 risposte;A) Magnolia, ###B) Boogie Nights, C) Il petroliere, D) Magnolia;⭐⭐⭐;16/01/2026
+CIN90023;Cinema '90;La pellicola "Il sesto senso" (1999) è famosa per un colpo di scena finale.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90024;Cinema '90;Quale film del 1999 è diretto da M. Night Shyamalan e presenta un bambino che vede i morti?;4 risposte;A) The Village, B) Signs, ###C) Il sesto senso, D) Unbreakable;⭐⭐;16/01/2026
+CIN90025;Cinema '90;Scrivi il nome dell'attore protagonista in "Il sesto senso".;Risposta aperta;###Bruce Willis;⭐⭐;16/01/2026
+CIN90026;Cinema '90;Quale film del 1993 è diretto da Steven Spielberg e racconta la storia di un parco con dinosauri?;4 risposte;A) King Kong, B) The Lost World, ###C) Jurassic Park, D) Godzilla;⭐⭐;16/01/2026
+CIN90027;Cinema '90;La pellicola "Jurassic Park" ha rivoluzionato l'uso degli effetti speciali in CGI.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90028;Cinema '90;Quale film del 1994 è diretto da Frank Darabont e racconta la vita in una prigione?;4 risposte;A) The Green Mile, B) Il miglio verde, ###C) Le ali della libertà, D) The Shawshank Redemption;⭐⭐⭐;16/01/2026
+CIN90029;Cinema '90;Scrivi il nome del protagonista in "Le ali della libertà" (The Shawshank Redemption).;Risposta aperta;###Andy Dufresne (interpretato da Tim Robbins);⭐⭐;16/01/2026
+CIN90030;Cinema '90;La pellicola "Il paziente inglese" è ambientata durante quale guerra?;4 risposte;A) Seconda guerra mondiale, ###B) Seconda guerra mondiale, C) Prima guerra mondiale, D) Guerra di Corea;⭐⭐⭐;16/01/2026
+CIN90031;Cinema '90;Quale film del 1998 è diretto da Steven Spielberg e racconta la storia di un archeologo?;4 risposte;A) Indiana Jones e il regno del teschio di cristallo, ###B) Salvarsi non applicabile, C) Salvarsi non applicabile, D) Salvarsi non applicabile;⭐⭐;16/01/2026
+CIN90032;Cinema '90;Scrivi il nome del regista di "Jurassic Park".;Risposta aperta;###Steven Spielberg;⭐⭐;16/01/2026
+CIN90033;Cinema '90;La pellicola "Il grande Lebowski" è diretta dai fratelli Coen.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90034;Cinema '90;Quale film del 1996 è diretto da Anthony Minghella e racconta una storia d'amore durante la Seconda Guerra Mondiale?;4 risposte;A) Il paziente inglese, B) L'ultimo dei Mohicani, ###C) Il paziente inglese, D) Il talento di Mr. Ripley;⭐⭐⭐;16/01/2026
+CIN90035;Cinema '90;Scrivi il nome dell'attore che interpreta Jack Dawson in "Titanic".;Risposta aperta;###Leonardo DiCaprio;⭐⭐;16/01/2026
+CIN90036;Cinema '90;Quale film del 1995 è diretto da Mel Gibson e racconta la storia di William Wallace?;4 risposte;A) Braveheart, ###B) Braveheart, C) Il patriota, D) L'ultimo samurai;⭐⭐⭐;16/01/2026
+CIN90037;Cinema '90;La pellicola "Fight Club" (1999) è basata su un romanzo di Chuck Palahniuk.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90038;Cinema '90;Quale film del 1999 è diretto da David Fincher e racconta la storia di un club clandestino?;4 risposte;A) American Beauty, ###B) Fight Club, C) The Game, D) Se7en;⭐⭐;16/01/2026
+CIN90039;Cinema '90;Scrivi il nome del regista di "Fight Club".;Risposta aperta;###David Fincher;⭐⭐;16/01/2026
+CIN90040;Cinema '90;Quale film del 1997 è diretto da James Cameron e racconta una storia d'amore su una nave?;4 risposte;A) Titanic, ###B) Titanic, C) The Abyss, D) True Lies;⭐⭐;16/01/2026
+CIN90041;Cinema '90;La pellicola "Il silenzio degli innocenti" è del 1991.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90042;Cinema '90;Quale film del 1992 è diretto da Robert Zemeckis e racconta la storia di un uomo che vive su un'isola deserta?;4 risposte;A) Forrest Gump, B) Cast Away, ###C) Forrest Gump, D) Cast Away;⭐⭐;16/01/2026
+CIN90043;Cinema '90;Scrivi il nome dell'attore che interpreta il protagonista in "Cast Away".;Risposta aperta;###Tom Hanks;⭐⭐;16/01/2026
+CIN90044;Cinema '90;La pellicola "Il sesto senso" è uscita nel 1999: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90045;Cinema '90;Quale film del 1994 è diretto da Robert Zemeckis e racconta la vita di un uomo semplice che attraversa eventi storici?;4 risposte;A) Forrest Gump, ###B) Forrest Gump, C) The Green Mile, D) Contact;⭐⭐;16/01/2026
+CIN90046;Cinema '90;Scrivi il nome del regista di "Pulp Fiction".;Risposta aperta;###Quentin Tarantino;⭐⭐⭐;16/01/2026
+CIN90047;Cinema '90;La pellicola "Il paziente inglese" è ambientata in quale continente principale?;4 risposte;A) Europa, ###B) Europa, C) Asia, D) Africa;⭐⭐⭐;16/01/2026
+CIN90048;Cinema '90;Quale film del 1990 è diretto da Tim Burton e ha come protagonista un uomo con forbici al posto delle mani?;4 risposte;A) Edward mani di forbice, ###B) Edward mani di forbice, C) Batman, D) Beetlejuice;⭐⭐;16/01/2026
+CIN90049;Cinema '90;Scrivi il nome dell'attrice che interpreta Clarice Starling in "Il silenzio degli innocenti".;Risposta aperta;###Jodie Foster;⭐⭐;16/01/2026
+CIN90050;Cinema '90;La pellicola "Jurassic Park" è basata su un romanzo di quale autore?;4 risposte;A) Michael Crichton, ###B) Michael Crichton, C) Stephen King, D) Michael Crichton;⭐⭐;16/01/2026
+CIN90051;Cinema '90;Quale film del 1996 è diretto da Joel Coen e racconta la storia di un uomo che cerca la sua identità?;4 risposte;A) Fargo, ###B) Fargo, C) Il grande Lebowski, D) Barton Fink;⭐⭐;16/01/2026
+CIN90052;Cinema '90;La pellicola "Fargo" è ambientata principalmente in quale stato degli USA?;4 risposte;A) Minnesota, ###B) Minnesota, C) California, D) New York;⭐⭐;16/01/2026
+CIN90053;Cinema '90;Scrivi il nome del regista di "Titanic".;Risposta aperta;###James Cameron;⭐⭐;16/01/2026
+CIN90054;Cinema '90;Quale film del 1998 è diretto da Steven Spielberg e racconta la storia di un archeologo?;4 risposte;A) Indiana Jones e il regno del teschio di cristallo, ###B) Nessuno (il film del 1998 non è un Indiana Jones), C) Jurassic Park III, D) Salvarsi non applicabile;⭐⭐;16/01/2026
+CIN90055;Cinema '90;La pellicola "American Beauty" è diretta da quale regista?;4 risposte;A) Sam Mendes, ###B) Sam Mendes, C) David Fincher, D) Steven Soderbergh;⭐⭐;16/01/2026
+CIN90056;Cinema '90;Quale film del 1991 è diretto da Jonathan Demme e ha come antagonista Hannibal Lecter?;4 risposte;A) Il silenzio degli innocenti, ###B) Il silenzio degli innocenti, C) Hannibal, D) Red Dragon;⭐⭐;16/01/2026
+CIN90057;Cinema '90;Scrivi il nome dell'attore che interpreta Hannibal Lecter in "Il silenzio degli innocenti".;Risposta aperta;###Anthony Hopkins;⭐⭐;16/01/2026
+CIN90058;Cinema '90;La pellicola "Fight Club" è basata su un romanzo di quale autore?;4 risposte;A) Chuck Palahniuk, ###B) Chuck Palahniuk, C) Bret Easton Ellis, D) Stephen King;⭐⭐;16/01/2026
+CIN90059;Cinema '90;Quale film del 1994 è diretto da Robert Zemeckis e racconta la storia di un uomo che vive in prigione?;4 risposte;A) Forrest Gump, B) The Green Mile, ###C) Le ali della libertà, D) Il miglio verde;⭐⭐;16/01/2026
+CIN90060;Cinema '90;La pellicola "Le ali della libertà" è basata su un racconto di Stephen King: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90061;Cinema '90;Scrivi il nome del regista di "Le ali della libertà".;Risposta aperta;###Frank Darabont;⭐⭐;16/01/2026
+CIN90062;Cinema '90;Quale film del 1995 è diretto da Bryan Singer e introduce un gruppo di mutanti?;4 risposte;A) X-Men, ###B) X-Men, C) Blade, D) Spawn;⭐⭐;16/01/2026
+CIN90063;Cinema '90;La pellicola "X-Men" ha contribuito all'ascesa dei film di supereroi moderni.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90064;Cinema '90;Quale film del 1999 è diretto da Sam Mendes e racconta la crisi di mezza età di un uomo?;4 risposte;A) American Beauty, ###B) American Beauty, C) Fight Club, D) The Insider;⭐⭐;16/01/2026
+CIN90065;Cinema '90;Scrivi il nome dell'attore che interpreta il protagonista in "American Beauty".;Risposta aperta;###Kevin Spacey;⭐⭐;16/01/2026
+CIN90066;Cinema '90;La pellicola "Il paziente inglese" ha come ambientazione principale quale continente?;4 risposte;A) Africa, ###B) Europa, C) Asia, D) America;⭐⭐⭐;16/01/2026
+CIN90067;Cinema '90;Quale film del 1992 è diretto da Clint Eastwood e racconta la storia di un veterano?;4 risposte;A) Un mondo perfetto, ###B) Un mondo perfetto, C) Million Dollar Baby, D) Mystic River;⭐⭐;16/01/2026
+CIN90068;Cinema '90;La pellicola "Un mondo perfetto" è interpretata da Kevin Costner: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90069;Cinema '90;Scrivi il nome del regista di "Pulp Fiction".;Risposta aperta;###Quentin Tarantino;⭐⭐;16/01/2026
+CIN90070;Cinema '90;Quale film del 1997 è diretto da Gus Van Sant e racconta la vita di un giovane omicida?;4 risposte;A) Good Will Hunting, B) Elephant, ###C) Good Will Hunting, D) My Own Private Idaho;⭐⭐;16/01/2026
+CIN90071;Cinema '90;La pellicola "Good Will Hunting" ha come protagonisti Matt Damon e Ben Affleck.;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90072;Cinema '90;Quale film del 1996 è diretto da Mike Leigh e racconta la vita di una donna inglese?;4 risposte;A) Vera Drake, ###B) Nessuno (Vera Drake è 2004), C) Secrets & Lies, D) Topsy-Turvy;⭐⭐;16/01/2026
+CIN90073;Cinema '90;Scrivi il nome dell'attore che interpreta il protagonista in "Fight Club".;Risposta aperta;###Edward Norton;⭐⭐;16/01/2026
+CIN90074;Cinema '90;La pellicola "Il sesto senso" è diretta da quale regista?;4 risposte;A) M. Night Shyamalan, ###B) M. Night Shyamalan, C) David Fincher, D) Christopher Nolan;⭐⭐;16/01/2026
+CIN90075;Cinema '90;Quale film del 1994 è diretto da Robert Zemeckis e racconta la storia di un uomo che vive molte esperienze straordinarie?;4 risposte;A) Forrest Gump, ###B) Forrest Gump, C) Contact, D) The Green Mile;⭐⭐;16/01/2026
+CIN90076;Cinema '90;La pellicola "Titanic" ha vinto l'Oscar per il Miglior Film nel 1998: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90077;Cinema '90;Scrivi il nome del regista di "Titanic".;Risposta aperta;###James Cameron;⭐⭐;16/01/2026
+CIN90078;Cinema '90;Quale film del 1990 è diretto da Martin Scorsese e racconta la storia di un gangster?;4 risposte;A) Quei bravi ragazzi, ###B) Quei bravi ragazzi, C) Casino, D) Goodfellas;⭐⭐;16/01/2026
+CIN90079;Cinema '90;La pellicola "Quei bravi ragazzi" è basata su eventi reali: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90080;Cinema '90;Quale film del 1995 è diretto da Mel Gibson e racconta la storia di un condottiero scozzese?;4 risposte;A) Braveheart, ###B) Braveheart, C) Braveheart II, D) The Patriot;⭐⭐⭐;16/01/2026
+CIN90081;Cinema '90;Scrivi il nome dell'attore che interpreta il protagonista in "Quei bravi ragazzi".;Risposta aperta;###Ray Liotta;⭐⭐;16/01/2026
+CIN90082;Cinema '90;La pellicola "Il grande Lebowski" è uscita nel 1998: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90083;Cinema '90;Quale film del 1993 è diretto da Steven Spielberg e racconta la storia di un parco con creature preistoriche?;4 risposte;A) Jurassic Park, ###B) Jurassic Park, C) The Lost World, D) King Kong;⭐⭐;16/01/2026
+CIN90084;Cinema '90;Scrivi il nome del regista di "Forrest Gump".;Risposta aperta;###Robert Zemeckis;⭐⭐;16/01/2026
+CIN90085;Cinema '90;La pellicola "Fight Club" è uscita nel 1999: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90086;Cinema '90;Quale film del 1996 è diretto da Joel Coen e racconta la storia di una donna incinta in difficoltà?;4 risposte;A) Fargo, ###B) Fargo, C) The Big Lebowski, D) Miller's Crossing;⭐⭐;16/01/2026
+CIN90087;Cinema '90;Scrivi il nome dell'attore che interpreta il protagonista in "Pulp Fiction".;Risposta aperta;###John Travolta;⭐⭐;16/01/2026
+CIN90088;Cinema '90;La pellicola "Il sesto senso" ha un finale a sorpresa: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90089;Cinema '90;Quale film del 1998 è diretto da Steven Spielberg e racconta la storia di un archeologo?;4 risposte;A) Indiana Jones e il regno del teschio di cristallo, ###B) Nessuno (nessun Indiana Jones nel 1998), C) Jurassic Park III, D) Salvarsi non applicabile;⭐⭐;16/01/2026
+CIN90090;Cinema '90;Scrivi il nome del regista di "Fight Club".;Risposta aperta;###David Fincher;⭐⭐;16/01/2026
+CIN90091;Cinema '90;La pellicola "Forrest Gump" è uscita nel 1994: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90092;Cinema '90;Quale film del 1997 è diretto da Paul Thomas Anderson e racconta la vita nel mondo del cinema per adulti?;4 risposte;A) Magnolia, ###B) Boogie Nights, C) Il petroliere, D) There Will Be Blood;⭐⭐⭐;16/01/2026
+CIN90093;Cinema '90;Scrivi il nome dell'attore che interpreta il protagonista in "Boogie Nights".;Risposta aperta;###Mark Wahlberg;⭐⭐;16/01/2026
+CIN90094;Cinema '90;La pellicola "Jurassic Park" ha come tema principale la clonazione e il controllo della natura: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90095;Cinema '90;Quale film del 1999 è diretto da Sam Mendes e racconta la crisi esistenziale di un uomo di mezza età?;4 risposte;A) American Beauty, ###B) American Beauty, C) Fight Club, D) The Insider;⭐⭐;16/01/2026
+CIN90096;Cinema '90;Scrivi il nome del regista di "Titanic".;Risposta aperta;###James Cameron;⭐⭐;16/01/2026
+CIN90097;Cinema '90;La pellicola "Pulp Fiction" ha vinto la Palma d'Oro a Cannes: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
+CIN90098;Cinema '90;Quale film del 1994 è diretto da Robert Zemeckis e racconta la storia di un uomo che vive molte esperienze straordinarie?;4 risposte;A) Forrest Gump, ###B) Forrest Gump, C) The Green Mile, D) Contact;⭐⭐;16/01/2026
+CIN90099;Cinema '90;Scrivi il nome dell'attore che interpreta il protagonista in "Fight Club".;Risposta aperta;###Brad Pitt;⭐⭐;16/01/2026
+CIN90100;Cinema '90;La pellicola "Titanic" è uscita nel 1997: vero o falso?;Vero/Falso;###Vero, Falso;⭐⭐;16/01/2026
