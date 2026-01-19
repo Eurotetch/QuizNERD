@@ -509,16 +509,14 @@ document.addEventListener('DOMContentLoaded', () => {
 		const p = document.createElement('div'); p.style.marginBottom='6px'; p.innerText = `${idx+1}. ${sol}`; container.appendChild(p);
 	  });
 
-	  container.style.position = 'fixed'; container.style.left = '-9999px';
-	  document.body.appendChild(container);
+	  document.getElementsByClassName("preview-container").innerHTML = "";
+	  document.getElementsByClassName("preview-container").prepend(container);
 
 	  const opt = { margin:10, filename:`quiz_export_${Date.now()}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'pt',format:'a4',orientation:'portrait'} };
 	  try {
 		await html2pdf().set(opt).from(container).save();
 	  } catch(err){
 		alert('Errore durante la generazione del PDF: ' + (err && err.message ? err.message : err));
-	  } finally {
-		document.body.removeChild(container);
 	  }
 	}
 
