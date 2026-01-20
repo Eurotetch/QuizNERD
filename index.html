@@ -215,8 +215,22 @@ document.addEventListener('DOMContentLoaded', () => {
             Difficolta: r['Difficoltà'] || r['Difficolta'] || r['Difficulty'] || '',
             Data: r['Data Creazione'] || r['Data'] || r['Date'] || ''
           }));
-          workbookData[name] = normalized;
-          allCategories.push(name);
+          
+		  // key troncata a 25 caratteri (costante)
+			const TRUNC_LEN = 25;
+
+			// dentro il forEach dei fogli, invece di usare name direttamente:
+			const categoryKey = name.slice(0, TRUNC_LEN);
+			let uniqueKey = categoryKey;
+			let suffix = 1;
+			// se per caso due fogli hanno la stessa key troncata, rendila unica aggiungendo suffisso
+			while (workbookData.hasOwnProperty(uniqueKey)) {
+			  uniqueKey = categoryKey.slice(0, TRUNC_LEN - String(suffix).length) + String(suffix);
+			  suffix++;
+			}
+			workbookData[uniqueKey] = normalized;
+			allCategories.push({ key: uniqueKey, full: name });
+
         });
 
         // ricostruisci UI filtri in modo sicuro
@@ -240,49 +254,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ---------- Build filtri in modo sicuro ---------- */
   function buildFiltersUI() {
-    const typesArea = document.getElementById('typesArea');
-    const catsArea = document.getElementById('catsArea');
-    typesArea.innerHTML = ''; catsArea.innerHTML = '';
+	  const typesArea = document.getElementById('typesArea');
+	  const catsArea = document.getElementById('catsArea');
+	  typesArea.innerHTML = ''; catsArea.innerHTML = '';
 
-    allTypes.forEach(t => {
-      const div = document.createElement('div');
-      div.className = 'chk';
-      const input = document.createElement('input');
-      input.type = 'checkbox';
-      input.className = 'typeChk';
-      input.dataset.type = t;
-      input.checked = true;
-      const label = document.createElement('label');
-      label.appendChild(input);
-      const span = document.createElement('span');
-      span.textContent = ' ' + t;
-      label.appendChild(span);
-      div.appendChild(label);
-      typesArea.appendChild(div);
-    });
+	  // Tipologie (unchanged)
+	  allTypes.forEach(t => {
+		const div = document.createElement('div');
+		div.className = 'chk';
+		const input = document.createElement('input');
+		input.type = 'checkbox';
+		input.className = 'typeChk';
+		input.dataset.type = t;
+		input.checked = true;
+		const label = document.createElement('label');
+		label.appendChild(input);
+		const span = document.createElement('span');
+		span.textContent = ' ' + t;
+		label.appendChild(span);
+		div.appendChild(label);
+		typesArea.appendChild(div);
+	  });
 
-    allCategories.forEach(c => {
-      const div = document.createElement('div');
-      div.className = 'chk';
-      const input = document.createElement('input');
-      input.type = 'checkbox';
-      input.className = 'catChk';
-      input.dataset.cat = c;
-      input.checked = true;
-      const label = document.createElement('label');
-      label.appendChild(input);
-      const span = document.createElement('span');
-      span.className = 'cat-label';
-      span.textContent = (c.length > 60 ? c.slice(0,57) + '…' : c);
-      span.title = c;
-      label.appendChild(span);
-      div.appendChild(label);
-      catsArea.appendChild(div);
-    });
+	  // Categorie: allCategories è array di { key, full }
+	  allCategories.forEach(c => {
+		const div = document.createElement('div');
+		div.className = 'chk';
+		const input = document.createElement('input');
+		input.type = 'checkbox';
+		input.className = 'catChk';
+		// dataset.cat contiene la key troncata (usata per logiche ed export)
+		input.dataset.cat = c.key;
+		input.checked = true;
 
-    if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
-    setupDifficultySync();
-  }
+		const label = document.createElement('label');
+		label.appendChild(input);
+
+		// mostra il nome completo in pagina, ma dataset resta la key
+		const span = document.createElement('span');
+		span.className = 'cat-label';
+		span.textContent = c.full; // full name visible
+		span.title = c.full;
+		label.appendChild(span);
+
+		div.appendChild(label);
+		catsArea.appendChild(div);
+	  });
+
+	  const toggleAll = document.getElementById('toggleAllCats');
+	  if (toggleAll) toggleAll.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
+	  setupDifficultySync();
+	}
+
 
   /* ---------- Ripara categorie malformate (ricostruzione sicura) ---------- */
   function repairCatsFromAllCategories(){
@@ -314,30 +337,39 @@ document.addEventListener('DOMContentLoaded', () => {
   openPresetBtn.addEventListener('click', () => presetInput.click());
 
   presetInput.addEventListener('change', (ev) => {
-    const f = ev.target.files[0];
-    if (!f) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const lines = e.target.result.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-      document.querySelectorAll('.catChk').forEach(cb => cb.checked = false);
-      lines.forEach(l => {
-        document.querySelectorAll('.catChk').forEach(cb => {
-          if (cb.dataset.cat === l) cb.checked = true;
-        });
-      });
-      if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
-      alert('Preset applicato');
-    };
-    reader.readAsText(f, 'utf-8');
-    presetInput.value = '';
-  });
+	  const f = ev.target.files[0];
+	  if (!f) return;
+	  const reader = new FileReader();
+	  reader.onload = (e) => {
+		const lines = e.target.result.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+		// deseleziona tutte
+		document.querySelectorAll('.catChk').forEach(cb => cb.checked = false);
+		// per ogni riga del preset, prova a matchare key o full
+		lines.forEach(line => {
+		  document.querySelectorAll('.catChk').forEach(cb => {
+			const key = cb.dataset.cat;
+			// trova l'oggetto full corrispondente
+			const catObj = allCategories.find(ac => ac.key === key);
+			const full = catObj ? catObj.full : '';
+			if (key === line || full === line) cb.checked = true;
+		  });
+		});
+		const toggleAll = document.getElementById('toggleAllCats');
+		if (toggleAll) toggleAll.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
+		alert('Preset applicato');
+	  };
+	  reader.readAsText(f, 'utf-8');
+	  presetInput.value = '';
+	});
+
 
   exportPresetBtn.addEventListener('click', () => {
-    const selected = Array.from(document.querySelectorAll('.catChk')).filter(cb => cb.checked).map(cb => cb.dataset.cat);
-    if (selected.length === 0) return alert('Nessuna categoria selezionata');
-    const blob = new Blob([selected.join('\n')], { type: 'text/plain;charset=utf-8' });
-    saveAs(blob, `preset_categorie_${Date.now()}.txt`);
-  });
+	  const selected = Array.from(document.querySelectorAll('.catChk')).filter(cb => cb.checked).map(cb => cb.dataset.cat);
+	  if (selected.length === 0) return alert('Nessuna categoria selezionata');
+	  const blob = new Blob([selected.join('\n')], { type: 'text/plain;charset=utf-8' });
+	  saveAs(blob, `preset_categorie_${Date.now()}.txt`);
+	});
+
 
   /* ---------- Toggle tutte le categorie ---------- */
   if (toggleAllCatsEl) {
