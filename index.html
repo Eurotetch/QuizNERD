@@ -328,13 +328,22 @@ async function handleDriveArrayBuffer(arrayBuffer, filename) {
       if (json.length < 2) return;
       const headers = json[0].map(h => String(h).trim());
       const rows = json.slice(1).map(r => {
-		  const rows = json.slice(1).map(r => {
-		  const obj = {};
-		  headers.forEach((h, i) => {
-			obj[h] = (r[i] ?? "");
-		  });
-		  return obj;
+	  const obj = {};
+	  // r potrebbe essere undefined o un array più corto; gestiamolo in modo sicuro
+	  headers.forEach((h, i) => {
+		let cell = "";
+		if (Array.isArray(r) && i < r.length) {
+		  // r[i] può essere undefined o null; usiamo fallback stringa vuota
+		  cell = r[i] !== undefined && r[i] !== null ? r[i] : "";
+		}
+		obj[h] = cell;
+	  });
+	  return obj;
+		}).filter(rowObj => {
+		  // rimuoviamo eventuali righe completamente vuote (tutte le celle vuote)
+		  return Object.values(rowObj).some(v => v !== "" && v !== null && v !== undefined);
 		});
+
 
       });
       const normalized = rows.map(r => ({
@@ -401,6 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
         wb.SheetNames.forEach(name => {
           const ws = wb.Sheets[name];
           const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+		  console.log('Parsing sheet', name, 'rows:', json.length, 'firstRows:', json.slice(0,5));
           if (json.length < 2) return;
           const headers = json[0].map(h => String(h).trim());
           const rows = json.slice(1).map(r => {
