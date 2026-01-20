@@ -327,25 +327,23 @@ async function handleDriveArrayBuffer(arrayBuffer, filename) {
       const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
       if (json.length < 2) return;
       const headers = json[0].map(h => String(h).trim());
+
       const rows = json.slice(1).map(r => {
-	  const obj = {};
-	  // r potrebbe essere undefined o un array più corto; gestiamolo in modo sicuro
-	  headers.forEach((h, i) => {
-		let cell = "";
-		if (Array.isArray(r) && i < r.length) {
-		  // r[i] può essere undefined o null; usiamo fallback stringa vuota
-		  cell = r[i] !== undefined && r[i] !== null ? r[i] : "";
-		}
-		obj[h] = cell;
-	  });
-	  return obj;
-		}).filter(rowObj => {
-		  // rimuoviamo eventuali righe completamente vuote (tutte le celle vuote)
-		  return Object.values(rowObj).some(v => v !== "" && v !== null && v !== undefined);
-		});
-
-
+        const obj = {};
+        // r potrebbe essere undefined o un array più corto; gestiamolo in modo sicuro
+        headers.forEach((h, i) => {
+          let cell = "";
+          if (Array.isArray(r) && i < r.length) {
+            cell = r[i] !== undefined && r[i] !== null ? r[i] : "";
+          }
+          obj[h] = cell;
+        });
+        return obj;
+      }).filter(rowObj => {
+        // rimuoviamo eventuali righe completamente vuote (tutte le celle vuote)
+        return Object.values(rowObj).some(v => v !== "" && v !== null && v !== undefined);
       });
+
       const normalized = rows.map(r => ({
         ID: r['ID'] || r['Id'] || r['id'] || '',
         Tema: r['Tema'] || r['tema'] || name,
@@ -370,7 +368,7 @@ async function handleDriveArrayBuffer(arrayBuffer, filename) {
       }
       workbookData[uniqueKey] = normalized;
       allCategories.push({ key: uniqueKey, full: name });
-    });
+    }); // fine forEach
 
     buildFiltersUI();
     repairCatsFromAllCategories();
@@ -385,6 +383,7 @@ async function handleDriveArrayBuffer(arrayBuffer, filename) {
     alert('Errore parsing file Excel da Drive: ' + (err.message || err));
   }
 }
+
 
 /* ---------- DOMContentLoaded ---------- */
 document.addEventListener('DOMContentLoaded', () => {
