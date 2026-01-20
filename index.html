@@ -234,6 +234,98 @@ function updateDriveButtonLabel(loaded) {
   btn.textContent = loaded ? "Aggiorna Excel dal Drive" : "Carica Excel dal Drive";
 }
 
+/* ---------- make UI functions global (so Drive callback can call them) ---------- */
+window.setupDifficultySync = function() {
+  const diffAllCheckbox = document.getElementById('diff_all');
+  const diffCheckboxes = Array.from(document.querySelectorAll('.diffChk'));
+  if (!diffAllCheckbox) return;
+  diffAllCheckbox.addEventListener('change', (e) => {
+    const checked = e.target.checked;
+    diffCheckboxes.forEach(cb => cb.checked = checked);
+  });
+  diffCheckboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      const allChecked = diffCheckboxes.every(d => d.checked);
+      diffAllCheckbox.checked = allChecked;
+    });
+  });
+};
+
+window.buildFiltersUI = function() {
+  normalizeAllCategories();
+  const typesArea = document.getElementById('typesArea');
+  const catsArea = document.getElementById('catsArea');
+  if (!typesArea || !catsArea) return;
+  typesArea.innerHTML = ''; catsArea.innerHTML = '';
+
+  allTypes.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'chk';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.className = 'typeChk';
+    input.dataset.type = t;
+    input.checked = true;
+    const label = document.createElement('label');
+    label.appendChild(input);
+    const span = document.createElement('span');
+    span.textContent = ' ' + t;
+    label.appendChild(span);
+    div.appendChild(label);
+    typesArea.appendChild(div);
+  });
+
+  allCategories.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'chk';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.className = 'catChk';
+    input.dataset.cat = c.key;
+    input.checked = true;
+    const label = document.createElement('label');
+    label.appendChild(input);
+    const span = document.createElement('span');
+    span.className = 'cat-label';
+    span.textContent = c.full;
+    span.title = c.full;
+    label.appendChild(span);
+    div.appendChild(label);
+    catsArea.appendChild(div);
+  });
+
+  const toggleAllCatsEl = document.getElementById('toggleAllCats');
+  if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
+  window.setupDifficultySync();
+};
+
+window.repairCatsFromAllCategories = function(){
+  normalizeAllCategories();
+  const catsArea = document.getElementById('catsArea');
+  if(!catsArea) return;
+  catsArea.innerHTML = '';
+  allCategories.forEach(c => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chk';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.className = 'catChk';
+    input.dataset.cat = c.key;
+    input.checked = true;
+    const label = document.createElement('label');
+    label.appendChild(input);
+    const span = document.createElement('span');
+    span.className = 'cat-label';
+    span.textContent = c.full;
+    span.title = c.full;
+    label.appendChild(span);
+    wrapper.appendChild(label);
+    catsArea.appendChild(wrapper);
+  });
+  const toggleAllCatsEl = document.getElementById('toggleAllCats');
+  if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb=>cb.checked);
+};
+
 /* ---------- Google Drive + GIS ---------- */
 const GDRIVE_CLIENT_ID = '641611618956-b3fq35ednc26bpce0e4562mt3f4779s1.apps.googleusercontent.com';
 const GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
@@ -276,6 +368,7 @@ function ensureDriveToken() {
       driveAccessToken = resp.access_token;
       resolve(driveAccessToken);
     };
+    // prompt consent to ensure fresh token
     driveTokenClient.requestAccessToken({ prompt: 'consent' });
   });
 }
@@ -368,10 +461,11 @@ async function handleDriveArrayBuffer(arrayBuffer, filename) {
       }
       workbookData[uniqueKey] = normalized;
       allCategories.push({ key: uniqueKey, full: name });
-    }); // fine forEach
+    }); // end forEach
 
-    buildFiltersUI();
-    repairCatsFromAllCategories();
+    // aggiorna UI
+    if (typeof window.buildFiltersUI === 'function') window.buildFiltersUI();
+    if (typeof window.repairCatsFromAllCategories === 'function') window.repairCatsFromAllCategories();
     const sheets = Object.keys(workbookData).length;
     const statusArea = document.getElementById('statusArea');
     if (statusArea) statusArea.innerText = `File caricato da Drive: ${sheets} fogli (${filename || ''})`;
@@ -384,7 +478,6 @@ async function handleDriveArrayBuffer(arrayBuffer, filename) {
   }
 }
 
-
 /* ---------- DOMContentLoaded ---------- */
 document.addEventListener('DOMContentLoaded', () => {
   const fileInput = document.getElementById('fileInput');
@@ -392,6 +485,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const presetInput = document.getElementById('presetInput');
   const exportPresetBtn = document.getElementById('exportPresetBtn');
   const toggleAllCatsEl = document.getElementById('toggleAllCats');
+
+  // inizializza difficulty sync (se presente)
+  window.setupDifficultySync();
 
   document.getElementById('localExcelBtn').addEventListener('click', () => {
     fileInput.click();
@@ -409,19 +505,21 @@ document.addEventListener('DOMContentLoaded', () => {
         wb.SheetNames.forEach(name => {
           const ws = wb.Sheets[name];
           const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-		  console.log('Parsing sheet', name, 'rows:', json.length, 'firstRows:', json.slice(0,5));
           if (json.length < 2) return;
           const headers = json[0].map(h => String(h).trim());
-          const rows = json.slice(1).map(r => {
-			  const rows = json.slice(1).map(r => {
-			  const obj = {};
-			  headers.forEach((h, i) => {
-				obj[h] = (r[i] ?? "");
-			  });
-			  return obj;
-			});
 
-          });
+          const rows = json.slice(1).map(r => {
+            const obj = {};
+            headers.forEach((h, i) => {
+              let cell = "";
+              if (Array.isArray(r) && i < r.length) {
+                cell = r[i] !== undefined && r[i] !== null ? r[i] : "";
+              }
+              obj[h] = cell;
+            });
+            return obj;
+          }).filter(rowObj => Object.values(rowObj).some(v => v !== "" && v !== null && v !== undefined));
+
           const normalized = rows.map(r => ({
             ID: r['ID'] || r['Id'] || r['id'] || '',
             Tema: r['Tema'] || r['tema'] || name,
@@ -448,8 +546,8 @@ document.addEventListener('DOMContentLoaded', () => {
           allCategories.push({ key: uniqueKey, full: name });
         });
 
-        buildFiltersUI();
-        repairCatsFromAllCategories();
+        if (typeof window.buildFiltersUI === 'function') window.buildFiltersUI();
+        if (typeof window.repairCatsFromAllCategories === 'function') window.repairCatsFromAllCategories();
 
         const sheets = Object.keys(workbookData).length;
         const statusArea = document.getElementById('statusArea');
@@ -471,78 +569,6 @@ document.addEventListener('DOMContentLoaded', () => {
       alert("Errore caricamento file da Drive: " + (err.message || err));
     }
   });
-
-  function buildFiltersUI() {
-    normalizeAllCategories();
-    const typesArea = document.getElementById('typesArea');
-    const catsArea = document.getElementById('catsArea');
-    typesArea.innerHTML = ''; catsArea.innerHTML = '';
-
-    allTypes.forEach(t => {
-      const div = document.createElement('div');
-      div.className = 'chk';
-      const input = document.createElement('input');
-      input.type = 'checkbox';
-      input.className = 'typeChk';
-      input.dataset.type = t;
-      input.checked = true;
-      const label = document.createElement('label');
-      label.appendChild(input);
-      const span = document.createElement('span');
-      span.textContent = ' ' + t;
-      label.appendChild(span);
-      div.appendChild(label);
-      typesArea.appendChild(div);
-    });
-
-    allCategories.forEach(c => {
-      const div = document.createElement('div');
-      div.className = 'chk';
-      const input = document.createElement('input');
-      input.type = 'checkbox';
-      input.className = 'catChk';
-      input.dataset.cat = c.key;
-      input.checked = true;
-      const label = document.createElement('label');
-      label.appendChild(input);
-      const span = document.createElement('span');
-      span.className = 'cat-label';
-      span.textContent = c.full;
-      span.title = c.full;
-      label.appendChild(span);
-      div.appendChild(label);
-      catsArea.appendChild(div);
-    });
-
-    if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
-    setupDifficultySync();
-  }
-
-  function repairCatsFromAllCategories(){
-    normalizeAllCategories();
-    const catsArea = document.getElementById('catsArea');
-    if(!catsArea) return;
-    catsArea.innerHTML = '';
-    allCategories.forEach(c => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'chk';
-      const input = document.createElement('input');
-      input.type = 'checkbox';
-      input.className = 'catChk';
-      input.dataset.cat = c.key;
-      input.checked = true;
-      const label = document.createElement('label');
-      label.appendChild(input);
-      const span = document.createElement('span');
-      span.className = 'cat-label';
-      span.textContent = c.full;
-      span.title = c.full;
-      label.appendChild(span);
-      wrapper.appendChild(label);
-      catsArea.appendChild(wrapper);
-    });
-    if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb=>cb.checked);
-  }
 
   openPresetBtn.addEventListener('click', () => presetInput.click());
 
@@ -580,184 +606,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const v = e.target.checked;
       document.querySelectorAll('.catChk').forEach(cb => cb.checked = v);
     });
-  }
-
-  function setupDifficultySync() {
-    const diffAllCheckbox = document.getElementById('diff_all');
-    const diffCheckboxes = Array.from(document.querySelectorAll('.diffChk'));
-    if (!diffAllCheckbox) return;
-    diffAllCheckbox.addEventListener('change', (e) => {
-      const checked = e.target.checked;
-      diffCheckboxes.forEach(cb => cb.checked = checked);
-    });
-    diffCheckboxes.forEach(cb => {
-      cb.addEventListener('change', () => {
-        const allChecked = diffCheckboxes.every(d => d.checked);
-        diffAllCheckbox.checked = allChecked;
-      });
-    });
-  }
-  setupDifficultySync();
-
-  function getSelectedFilters() {
-    const typeChecks = Array.from(document.querySelectorAll('.typeChk')).filter(i => i.checked).map(i => i.dataset.type);
-    if (typeChecks.length === 0) throw new Error('Seleziona almeno una tipologia');
-
-    const isOpenType = t => (t||'').toLowerCase().includes('risposta aperta');
-    const othersCount = typeChecks.filter(t => !isOpenType(t)).length;
-
-    const baseWeights = {};
-    typeChecks.forEach(t => {
-      if (isOpenType(t)) {
-        if (othersCount === 0) baseWeights[t] = 1;
-        else baseWeights[t] = (0.10 * othersCount) / (1 - 0.10);
-      } else {
-        baseWeights[t] = 1;
-      }
-    });
-
-    const totalW = Object.values(baseWeights).reduce((a,b)=>a+b,0);
-    const typePct = {};
-    typeChecks.forEach(t => typePct[t] = (baseWeights[t] / totalW));
-
-    const selectedCats = Array.from(document.querySelectorAll('.catChk')).filter(cb => cb.checked).map(cb => cb.dataset.cat);
-    if (selectedCats.length === 0) throw new Error('Seleziona almeno una categoria');
-
-    const allDiff = document.getElementById('diff_all') && document.getElementById('diff_all').checked;
-    const diffChecks = Array.from(document.querySelectorAll('.diffChk')).filter(i => i.checked).map(i => i.dataset.diff);
-    const diffs = allDiff ? ['all'] : (diffChecks.length ? diffChecks : ['all']);
-
-    const order = document.getElementById('orderSelect').value;
-    const desc = document.getElementById('descCheckbox').checked;
-    const totalN = Math.max(1, parseInt(document.getElementById('totalInput').value || 0));
-
-    return { typePct, typeChecks, selectedCats, diffs, order, desc, totalN };
-  }
-
-  function filterPoolByDifficulty(pool, diffs){
-    if(diffs.includes('all')) return pool;
-    const wantedCounts = diffs.map(d => countStars(d));
-    return pool.filter(q => {
-      const qStars = countStars(q.Difficolta || "");
-      return wantedCounts.includes(qStars);
-    });
-  }
-
-  function buildPool(selectedCats, diffs){
-    let pool = [];
-    selectedCats.forEach(catKey => {
-      const arr = workbookData[catKey] || [];
-      const filtered = filterPoolByDifficulty(arr, diffs);
-      filtered.forEach(q => {
-        const copy = Object.assign({}, q);
-        copy._category = catKey;
-        copy._normTipologia = norm(copy.Tipologia);
-        copy._normCategory = norm(copy._category);
-        copy._answersCount = ['RispostaA','RispostaB','RispostaC','RispostaD','RispostaE','RispostaF']
-          .map(k => (copy[k]||'').toString().trim()).filter(Boolean).length;
-        pool.push(copy);
-      });
-    });
-    return pool;
-  }
-
-  function allocateCounts(N, typePct, typeChecks, selectedCats, pool){
-    const targetType = {};
-    typeChecks.forEach(t => targetType[t] = Math.round(N * (typePct[t] || 0)));
-    let sum = Object.values(targetType).reduce((a,b)=>a+b,0);
-    while(sum !== N){
-      const diff = N - sum;
-      const key = typeChecks[Math.abs(diff) % typeChecks.length];
-      targetType[key] += Math.sign(diff);
-      sum = Object.values(targetType).reduce((a,b)=>a+b,0);
-    }
-    const perCellTargets = {};
-    typeChecks.forEach(t => {
-      perCellTargets[t] = {};
-      const tNorm = norm(t);
-      const poolType = pool.filter(q => q._normTipologia === tNorm);
-      const countsByCat = {};
-      selectedCats.forEach(c => {
-        const cNorm = norm(c);
-        countsByCat[c] = poolType.filter(q => q._normCategory === cNorm).length;
-      });
-      const totalAvailable = Object.values(countsByCat).reduce((a,b)=>a+b,0);
-      if(totalAvailable === 0){
-        selectedCats.forEach(c => perCellTargets[t][c] = 0);
-      } else {
-        selectedCats.forEach(c => perCellTargets[t][c] = Math.round(targetType[t] * (countsByCat[c] / totalAvailable)));
-        let s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
-        while(s !== targetType[t]){
-          const diff = targetType[t] - s;
-          const cat = selectedCats[Math.abs(diff) % selectedCats.length];
-          perCellTargets[t][cat] += Math.sign(diff);
-          s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
-        }
-      }
-    });
-    return { targetType, perCellTargets };
-  }
-
-  function sampleQuestions(perCellTargets, pool){
-    const chosen = []; const usedIDs = new Set();
-    for(const t of Object.keys(perCellTargets)){
-      const tNorm = norm(t);
-      for(const c of Object.keys(perCellTargets[t])){
-        const need = perCellTargets[t][c];
-        if(need <= 0) continue;
-        const cNorm = norm(c);
-        const candidatesAll = pool.filter(q => q._normTipologia === tNorm && q._normCategory === cNorm && !usedIDs.has(q.ID));
-        const candidatesWithAnswers = candidatesAll.filter(q => q._answersCount > 0);
-        const candidatesNoAnswers = candidatesAll.filter(q => q._answersCount === 0);
-        const candidates = candidatesWithAnswers.length ? candidatesWithAnswers : candidatesNoAnswers;
-        shuffleArray(candidates);
-        const take = candidates.slice(0, need);
-        take.forEach(q => { chosen.push(q); usedIDs.add(q.ID); });
-      }
-    }
-    return { chosen, usedIDs };
-  }
-
-  function fillRemaining(N, chosen, pool, usedIDs){
-    let remaining = N - chosen.length;
-    if(remaining <= 0) return chosen;
-    const candidates = pool.filter(q => !usedIDs.has(q.ID));
-    shuffleArray(candidates);
-    const take = candidates.slice(0, remaining);
-    take.forEach(q => chosen.push(q));
-    return chosen;
-  }
-
-  function enforceOpenCap(chosen, pool, usedIDs, cfg, openQuestionPredicate){
-    const N = cfg.totalN;
-    const selectedTypes = cfg.typeChecks || [];
-    const onlyOpenSelected = selectedTypes.length === 1 && (selectedTypes[0]||'').toLowerCase().includes('risposta aperta');
-    if (onlyOpenSelected) return { chosen, usedIDs };
-
-    const maxOpen = Math.floor(0.10 * N);
-    const isOpen = q => openQuestionPredicate(q);
-    let openIndices = [];
-    chosen.forEach((q, idx) => { if (isOpen(q)) openIndices.push(idx); });
-
-    if (openIndices.length <= maxOpen) return { chosen, usedIDs };
-
-    const toReplace = openIndices.length - maxOpen;
-    let replaced = 0;
-    const nonOpenCandidates = pool.filter(q => !usedIDs.has(q.ID) && !isOpen(q) && (q._answersCount > 0));
-    shuffleArray(nonOpenCandidates);
-
-    for(let i = openIndices.length - 1; i >= 0 && replaced < toReplace; i--){
-      const idx = openIndices[i];
-      const replacement = nonOpenCandidates.shift();
-      if (!replacement) break;
-      const removed = chosen[idx];
-      if (removed && removed.ID) usedIDs.delete(removed.ID);
-      chosen[idx] = replacement;
-      usedIDs.add(replacement.ID);
-      replaced++;
-    }
-
-    return { chosen, usedIDs };
   }
 
   document.getElementById('previewBtn').addEventListener('click', () => {
@@ -802,99 +650,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  async function generatePdf(questions, cfg){
-    const container = document.createElement('div');
-    container.style.width = '1200px';
-    container.style.padding = '24px';
-    container.style.fontFamily = 'Arial, Helvetica, sans-serif';
-    container.style.color = '#111';
-    container.style.background = '#fff';
-    container.style.position = 'relative';
-
-    const styleInline = document.createElement('style');
-    styleInline.innerHTML = `.real-answer{background:#691258;color:#fff;padding:4px 6px;border-radius:4px;display:inline-block}`;
-    container.appendChild(styleInline);
-
-    const header = document.createElement('div');
-    header.innerHTML = `<h1 style="margin:0;color:#120E01">NelGrimorio Quiz NERD</h1>
-      <div style="margin-top:6px">Totale domande: <strong>${questions.length}</strong></div>
-      <div style="margin-top:6px">Filtri: Difficoltà=${cfg.diffs.join(',')}, Ordinamento=${cfg.order}, Decrescente=${cfg.desc}</div>
-      <hr style="margin:12px 0">`;
-    container.appendChild(header);
-
-    questions.forEach((q, idx) => {
-      const qDiv = document.createElement('div');
-      qDiv.style.marginBottom = '12px';
-      qDiv.innerHTML = `<div style="font-weight:700">${idx+1}. ${escapeHtml(q.Domanda)}</div>`;
-      const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
-      if(answers.length){
-        answers.forEach((a,i) => {
-          const p = document.createElement('div');
-          p.style.marginLeft = '12px';
-          let text = a;
-          let isReal = false;
-          if (text.includes('###')) {
-            text = text.replace(/###/g, '').trim();
-            isReal = true;
-          }
-          p.innerHTML = `<strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(text)}`;
-          if (isReal) p.classList.add('real-answer');
-          qDiv.appendChild(p);
-        });
-      } else {
-        const p = document.createElement('div'); p.style.marginLeft='12px'; p.innerHTML = `<em>Risposta aperta</em>`; qDiv.appendChild(p);
-      }
-      const meta = document.createElement('div'); meta.style.marginTop='6px'; meta.style.color='#666'; meta.style.fontSize='12px';
-      meta.innerText = `Categoria: ${q._category} • Tipologia: ${q.Tipologia} • Difficoltà: ${q.Difficolta}`;
-      qDiv.appendChild(meta);
-      container.appendChild(qDiv);
-      const hr = document.createElement('hr'); hr.style.margin='8px 0'; container.appendChild(hr);
-    });
-
-    const previewHolder = document.getElementById("preview-container");
-    if (previewHolder) {
-      previewHolder.innerHTML = "";
-      previewHolder.appendChild(container);
-    } else {
-      document.body.appendChild(container);
-    }
-
-    const opt = { margin:10, filename:`quiz_export_${Date.now()}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'pt',format:'a4',orientation:'portrait'} };
-    try {
-      if (!container.innerHTML || container.innerHTML.trim().length < 20) throw new Error('Container PDF vuoto prima della conversione');
-      await html2pdf().set(opt).from(container).save();
-    } catch(err){
-      alert('Errore durante la generazione del PDF: ' + (err && err.message ? err.message : err));
-    } finally {
-      if (!document.getElementById("preview-container") && container && container.parentNode) container.parentNode.removeChild(container);
-    }
-  }
-
-  let currentIndex = 0;
-  function openViewer(questions){
-    currentIndex = 0;
-    document.getElementById('viewer').style.display = 'flex';
-    renderSlide();
-  }
-  function renderSlide(){
-    const container = document.getElementById('slideContent');
-    const q = selectedQuestions[currentIndex];
-    const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
-    container.innerHTML = `<h2 style="margin:0 0 8px 0">Domanda ${currentIndex+1} / ${selectedQuestions.length}</h2>
-      <h3 style="margin:0 0 12px 0">${escapeHtml(q.Domanda)}</h3>
-      <div>${answers.length ? answers.map((a,i)=>{
-        let text = a;
-        let cls = '';
-        if (text.includes('###')) { text = text.replace(/###/g,'').trim(); cls = 'real-answer'; }
-        return `<div style="margin:6px 0"><strong>${String.fromCharCode(65+i)})</strong> <span class="${cls}">${escapeHtml(text)}</span></div>`;
-      }).join('') : '<em>Risposta aperta</em>'}</div>
-      <div style="margin-top:12px;color:#666">Categoria: ${escapeHtml(q._category)} • Tipologia: ${escapeHtml(q.Tipologia)} • Difficoltà: ${escapeHtml(q.Difficolta)}</div>`;
-  }
-  document.getElementById('nextQ').addEventListener('click', ()=>{ if(currentIndex < selectedQuestions.length-1) currentIndex++; renderSlide(); });
-  document.getElementById('prevQ').addEventListener('click', ()=>{ if(currentIndex > 0) currentIndex--; renderSlide(); });
-  document.getElementById('closeViewer').addEventListener('click', ()=>{ document.getElementById('viewer').style.display='none'; });
-  document.getElementById('fsBtn').addEventListener('click', ()=>{ const el=document.getElementById('slide'); if(el.requestFullscreen) el.requestFullscreen(); });
-
   document.getElementById('startGameBtn').addEventListener('click', () => {
     try {
       const cfg = getSelectedFilters();
@@ -913,7 +668,268 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(err){ alert(err.message); }
   });
 
+  // viewer controls
+  document.getElementById('nextQ').addEventListener('click', ()=>{ if(currentIndex < selectedQuestions.length-1) currentIndex++; renderSlide(); });
+  document.getElementById('prevQ').addEventListener('click', ()=>{ if(currentIndex > 0) currentIndex--; renderSlide(); });
+  document.getElementById('closeViewer').addEventListener('click', ()=>{ document.getElementById('viewer').style.display='none'; });
+  document.getElementById('fsBtn').addEventListener('click', ()=>{ const el=document.getElementById('slide'); if(el.requestFullscreen) el.requestFullscreen(); });
+
 }); // end DOMContentLoaded
+
+/* ---------- Pool / allocation / sampling functions (unchanged) ---------- */
+function getSelectedFilters() {
+  const typeChecks = Array.from(document.querySelectorAll('.typeChk')).filter(i => i.checked).map(i => i.dataset.type);
+  if (typeChecks.length === 0) throw new Error('Seleziona almeno una tipologia');
+
+  const isOpenType = t => (t||'').toLowerCase().includes('risposta aperta');
+  const othersCount = typeChecks.filter(t => !isOpenType(t)).length;
+
+  const baseWeights = {};
+  typeChecks.forEach(t => {
+    if (isOpenType(t)) {
+      if (othersCount === 0) baseWeights[t] = 1;
+      else baseWeights[t] = (0.10 * othersCount) / (1 - 0.10);
+    } else {
+      baseWeights[t] = 1;
+    }
+  });
+
+  const totalW = Object.values(baseWeights).reduce((a,b)=>a+b,0);
+  const typePct = {};
+  typeChecks.forEach(t => typePct[t] = (baseWeights[t] / totalW));
+
+  const selectedCats = Array.from(document.querySelectorAll('.catChk')).filter(cb => cb.checked).map(cb => cb.dataset.cat);
+  if (selectedCats.length === 0) throw new Error('Seleziona almeno una categoria');
+
+  const allDiff = document.getElementById('diff_all') && document.getElementById('diff_all').checked;
+  const diffChecks = Array.from(document.querySelectorAll('.diffChk')).filter(i => i.checked).map(i => i.dataset.diff);
+  const diffs = allDiff ? ['all'] : (diffChecks.length ? diffChecks : ['all']);
+
+  const order = document.getElementById('orderSelect').value;
+  const desc = document.getElementById('descCheckbox').checked;
+  const totalN = Math.max(1, parseInt(document.getElementById('totalInput').value || 0));
+
+  return { typePct, typeChecks, selectedCats, diffs, order, desc, totalN };
+}
+
+function filterPoolByDifficulty(pool, diffs){
+  if(diffs.includes('all')) return pool;
+  const wantedCounts = diffs.map(d => countStars(d));
+  return pool.filter(q => {
+    const qStars = countStars(q.Difficolta || "");
+    return wantedCounts.includes(qStars);
+  });
+}
+
+function buildPool(selectedCats, diffs){
+  let pool = [];
+  selectedCats.forEach(catKey => {
+    const arr = workbookData[catKey] || [];
+    const filtered = filterPoolByDifficulty(arr, diffs);
+    filtered.forEach(q => {
+      const copy = Object.assign({}, q);
+      copy._category = catKey;
+      copy._normTipologia = norm(copy.Tipologia);
+      copy._normCategory = norm(copy._category);
+      copy._answersCount = ['RispostaA','RispostaB','RispostaC','RispostaD','RispostaE','RispostaF']
+        .map(k => (copy[k]||'').toString().trim()).filter(Boolean).length;
+      pool.push(copy);
+    });
+  });
+  return pool;
+}
+
+function allocateCounts(N, typePct, typeChecks, selectedCats, pool){
+  const targetType = {};
+  typeChecks.forEach(t => targetType[t] = Math.round(N * (typePct[t] || 0)));
+  let sum = Object.values(targetType).reduce((a,b)=>a+b,0);
+  while(sum !== N){
+    const diff = N - sum;
+    const key = typeChecks[Math.abs(diff) % typeChecks.length];
+    targetType[key] += Math.sign(diff);
+    sum = Object.values(targetType).reduce((a,b)=>a+b,0);
+  }
+  const perCellTargets = {};
+  typeChecks.forEach(t => {
+    perCellTargets[t] = {};
+    const tNorm = norm(t);
+    const poolType = pool.filter(q => q._normTipologia === tNorm);
+    const countsByCat = {};
+    selectedCats.forEach(c => {
+      const cNorm = norm(c);
+      countsByCat[c] = poolType.filter(q => q._normCategory === cNorm).length;
+    });
+    const totalAvailable = Object.values(countsByCat).reduce((a,b)=>a+b,0);
+    if(totalAvailable === 0){
+      selectedCats.forEach(c => perCellTargets[t][c] = 0);
+    } else {
+      selectedCats.forEach(c => perCellTargets[t][c] = Math.round(targetType[t] * (countsByCat[c] / totalAvailable)));
+      let s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
+      while(s !== targetType[t]){
+        const diff = targetType[t] - s;
+        const cat = selectedCats[Math.abs(diff) % selectedCats.length];
+        perCellTargets[t][cat] += Math.sign(diff);
+        s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
+      }
+    }
+  });
+  return { targetType, perCellTargets };
+}
+
+function sampleQuestions(perCellTargets, pool){
+  const chosen = []; const usedIDs = new Set();
+  for(const t of Object.keys(perCellTargets)){
+    const tNorm = norm(t);
+    for(const c of Object.keys(perCellTargets[t])){
+      const need = perCellTargets[t][c];
+      if(need <= 0) continue;
+      const cNorm = norm(c);
+      const candidatesAll = pool.filter(q => q._normTipologia === tNorm && q._normCategory === cNorm && !usedIDs.has(q.ID));
+      const candidatesWithAnswers = candidatesAll.filter(q => q._answersCount > 0);
+      const candidatesNoAnswers = candidatesAll.filter(q => q._answersCount === 0);
+      const candidates = candidatesWithAnswers.length ? candidatesWithAnswers : candidatesNoAnswers;
+      shuffleArray(candidates);
+      const take = candidates.slice(0, need);
+      take.forEach(q => { chosen.push(q); usedIDs.add(q.ID); });
+    }
+  }
+  return { chosen, usedIDs };
+}
+
+function fillRemaining(N, chosen, pool, usedIDs){
+  let remaining = N - chosen.length;
+  if(remaining <= 0) return chosen;
+  const candidates = pool.filter(q => !usedIDs.has(q.ID));
+  shuffleArray(candidates);
+  const take = candidates.slice(0, remaining);
+  take.forEach(q => chosen.push(q));
+  return chosen;
+}
+
+function enforceOpenCap(chosen, pool, usedIDs, cfg, openQuestionPredicate){
+  const N = cfg.totalN;
+  const selectedTypes = cfg.typeChecks || [];
+  const onlyOpenSelected = selectedTypes.length === 1 && (selectedTypes[0]||'').toLowerCase().includes('risposta aperta');
+  if (onlyOpenSelected) return { chosen, usedIDs };
+
+  const maxOpen = Math.floor(0.10 * N);
+  const isOpen = q => openQuestionPredicate(q);
+  let openIndices = [];
+  chosen.forEach((q, idx) => { if (isOpen(q)) openIndices.push(idx); });
+
+  if (openIndices.length <= maxOpen) return { chosen, usedIDs };
+
+  const toReplace = openIndices.length - maxOpen;
+  let replaced = 0;
+  const nonOpenCandidates = pool.filter(q => !usedIDs.has(q.ID) && !isOpen(q) && (q._answersCount > 0));
+  shuffleArray(nonOpenCandidates);
+
+  for(let i = openIndices.length - 1; i >= 0 && replaced < toReplace; i--){
+    const idx = openIndices[i];
+    const replacement = nonOpenCandidates.shift();
+    if (!replacement) break;
+    const removed = chosen[idx];
+    if (removed && removed.ID) usedIDs.delete(removed.ID);
+    chosen[idx] = replacement;
+    usedIDs.add(replacement.ID);
+    replaced++;
+  }
+
+  return { chosen, usedIDs };
+}
+
+/* ---------- PDF generation and viewer (unchanged) ---------- */
+async function generatePdf(questions, cfg){
+  const container = document.createElement('div');
+  container.style.width = '1200px';
+  container.style.padding = '24px';
+  container.style.fontFamily = 'Arial, Helvetica, sans-serif';
+  container.style.color = '#111';
+  container.style.background = '#fff';
+  container.style.position = 'relative';
+
+  const styleInline = document.createElement('style');
+  styleInline.innerHTML = `.real-answer{background:#691258;color:#fff;padding:4px 6px;border-radius:4px;display:inline-block}`;
+  container.appendChild(styleInline);
+
+  const header = document.createElement('div');
+  header.innerHTML = `<h1 style="margin:0;color:#120E01">NelGrimorio Quiz NERD</h1>
+    <div style="margin-top:6px">Totale domande: <strong>${questions.length}</strong></div>
+    <div style="margin-top:6px">Filtri: Difficoltà=${cfg.diffs.join(',')}, Ordinamento=${cfg.order}, Decrescente=${cfg.desc}</div>
+    <hr style="margin:12px 0">`;
+  container.appendChild(header);
+
+  questions.forEach((q, idx) => {
+    const qDiv = document.createElement('div');
+    qDiv.style.marginBottom = '12px';
+    qDiv.innerHTML = `<div style="font-weight:700">${idx+1}. ${escapeHtml(q.Domanda)}</div>`;
+    const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
+    if(answers.length){
+      answers.forEach((a,i) => {
+        const p = document.createElement('div');
+        p.style.marginLeft = '12px';
+        let text = a;
+        let isReal = false;
+        if (text.includes('###')) {
+          text = text.replace(/###/g, '').trim();
+          isReal = true;
+        }
+        p.innerHTML = `<strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(text)}`;
+        if (isReal) p.classList.add('real-answer');
+        qDiv.appendChild(p);
+      });
+    } else {
+      const p = document.createElement('div'); p.style.marginLeft='12px'; p.innerHTML = `<em>Risposta aperta</em>`; qDiv.appendChild(p);
+    }
+    const meta = document.createElement('div'); meta.style.marginTop='6px'; meta.style.color='#666'; meta.style.fontSize='12px';
+    meta.innerText = `Categoria: ${q._category} • Tipologia: ${q.Tipologia} • Difficoltà: ${q.Difficolta}`;
+    qDiv.appendChild(meta);
+    container.appendChild(qDiv);
+    const hr = document.createElement('hr'); hr.style.margin='8px 0'; container.appendChild(hr);
+  });
+
+  const previewHolder = document.getElementById("preview-container");
+  if (previewHolder) {
+    previewHolder.innerHTML = "";
+    previewHolder.appendChild(container);
+  } else {
+    document.body.appendChild(container);
+  }
+
+  const opt = { margin:10, filename:`quiz_export_${Date.now()}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'pt',format:'a4',orientation:'portrait'} };
+  try {
+    if (!container.innerHTML || container.innerHTML.trim().length < 20) throw new Error('Container PDF vuoto prima della conversione');
+    await html2pdf().set(opt).from(container).save();
+  } catch(err){
+    alert('Errore durante la generazione del PDF: ' + (err && err.message ? err.message : err));
+  } finally {
+    if (!document.getElementById("preview-container") && container && container.parentNode) container.parentNode.removeChild(container);
+  }
+}
+
+let currentIndex = 0;
+function openViewer(questions){
+  currentIndex = 0;
+  document.getElementById('viewer').style.display = 'flex';
+  renderSlide();
+}
+function renderSlide(){
+  const container = document.getElementById('slideContent');
+  const q = selectedQuestions[currentIndex];
+  if(!q) return;
+  const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
+  container.innerHTML = `<h2 style="margin:0 0 8px 0">Domanda ${currentIndex+1} / ${selectedQuestions.length}</h2>
+    <h3 style="margin:0 0 12px 0">${escapeHtml(q.Domanda)}</h3>
+    <div>${answers.length ? answers.map((a,i)=>{
+      let text = a;
+      let cls = '';
+      if (text.includes('###')) { text = text.replace(/###/g,'').trim(); cls = 'real-answer'; }
+      return `<div style="margin:6px 0"><strong>${String.fromCharCode(65+i)})</strong> <span class="${cls}">${escapeHtml(text)}</span></div>`;
+    }).join('') : '<em>Risposta aperta</em>'}</div>
+    <div style="margin-top:12px;color:#666">Categoria: ${escapeHtml(q._category)} • Tipologia: ${escapeHtml(q.Tipologia)} • Difficoltà: ${escapeHtml(q.Difficolta)}</div>`;
+}
+
+/* ---------- end script ---------- */
 </script>
 </body>
 </html>
