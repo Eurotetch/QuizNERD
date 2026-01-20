@@ -328,9 +328,14 @@ async function handleDriveArrayBuffer(arrayBuffer, filename) {
       if (json.length < 2) return;
       const headers = json[0].map(h => String(h).trim());
       const rows = json.slice(1).map(r => {
-        const obj = {};
-        headers.forEach((h, i) => obj[h] = r[i] ?? "");
-        return obj;
+		  const rows = json.slice(1).map(r => {
+		  const obj = {};
+		  headers.forEach((h, i) => {
+			obj[h] = (r[i] ?? "");
+		  });
+		  return obj;
+		});
+
       });
       const normalized = rows.map(r => ({
         ID: r['ID'] || r['Id'] || r['id'] || '',
@@ -399,9 +404,14 @@ document.addEventListener('DOMContentLoaded', () => {
           if (json.length < 2) return;
           const headers = json[0].map(h => String(h).trim());
           const rows = json.slice(1).map(r => {
-            const obj = {};
-            headers.forEach((h, i) => obj[h] = r[i] ?? "";
-            return obj;
+			  const rows = json.slice(1).map(r => {
+			  const obj = {};
+			  headers.forEach((h, i) => {
+				obj[h] = (r[i] ?? "");
+			  });
+			  return obj;
+			});
+
           });
           const normalized = rows.map(r => ({
             ID: r['ID'] || r['Id'] || r['id'] || '',
