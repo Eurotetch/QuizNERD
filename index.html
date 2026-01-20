@@ -48,10 +48,8 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-  
-  <!-- Google Drive API -->
-  <script src="https://apis.google.com/js/api.js"></script>
-
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div class="container">
@@ -65,19 +63,13 @@
 
     <div class="grid">
       <div class="card">
-        <label>Carica file Excel (.xlsx)</label>
+        <label>Carica file Excel</label>
         <div class="row">
-		  <button id="localExcelBtn" class="ghost">Carica Excel locale</button>
-
-		  <button id="driveExcelBtn" class="ghost">Carica Excel dal Drive</button>
-
-		  <span id="sheetsCountLabel" class="small" style="display:none;margin-left:12px">
-			N. fogli: 0
-		  </span>
-
-		  <input id="fileInput" type="file" accept=".xlsx,.xls" style="display:none" />
-		</div>
-
+          <button id="localExcelBtn" class="ghost">Carica Excel locale</button>
+          <button id="driveExcelBtn" class="ghost">Carica Excel dal Drive</button>
+          <span id="sheetsCountLabel" class="small">N. fogli: 0</span>
+          <input id="fileInput" type="file" accept=".xlsx,.xls" style="display:none" />
+        </div>
 
         <div style="height:12px"></div>
         <label>TIPOLOGIE DOMANDE</label>
@@ -172,913 +164,737 @@
     </div>
   </div>
 
-
-
-
-
-
-
-
-
-
 <script>
-
-	/* ---------- Stato e helper ---------- */
-	let workbookData = {}; // keyed by truncated key
-	let allTypes = ['4 Risposte','6 Risposte','Vero/Falso','Frase interrotta a 2 risposte','Continua la risposta','Risposta aperta'];
-	let selectedQuestions = [];
-	let allCategories = []; // array of { key, full }
-	const TRUNC_LEN = 25;
-
-	function norm(s){ return (s||'').toString().trim().toLowerCase(); }
-	function normalizeStars(s){ if(!s) return ''; return s.replace(/[\u2605\u2B50★☆✶✷✸✹✺✻✼✽✾✿]/g,'⭐').trim(); }
-	function countStars(s){ return (normalizeStars(s).match(/⭐/g)||[]).length; }
-	function escapeHtml(s){ if(!s) return ''; return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
-	function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
-
-	/* ---------- Normalizzazione categorie (string -> {key,full}) ---------- */
-	function normalizeAllCategories(){
-	  const out = [];
-	  if(!Array.isArray(allCategories)) { allCategories = []; return; }
-	  allCategories.forEach((c, idx) => {
-		if (c && typeof c === 'object' && c.key && c.full) {
-		  out.push(c);
-		  return;
-		}
-		if (typeof c === 'string') {
-		  let base = c.slice(0, TRUNC_LEN);
-		  let key = base;
-		  let suffix = 1;
-		  while(out.some(x => x.key === key)){
-			const suf = String(suffix++);
-			key = base.slice(0, TRUNC_LEN - suf.length) + suf;
-		  }
-		  out.push({ key, full: c });
-		  return;
-		}
-		const fallbackFull = String(c || `Categoria ${idx+1}`);
-		let base = fallbackFull.slice(0, TRUNC_LEN);
-		let key = base;
-		let suffix = 1;
-		while(out.some(x => x.key === key)){
-		  const suf = String(suffix++);
-		  key = base.slice(0, TRUNC_LEN - suf.length) + suf;
-		}
-		out.push({ key, full: fallbackFull });
-	  });
-	  allCategories = out;
-	}
-
-	/* ---------- UI helpers: sheets count label and preset toast ---------- */
-	function showSheetsCount(n){
-	  const el = document.getElementById('sheetsCountLabel');
-	  if(!el) return;
-	  el.textContent = `fogli totali: ${n}`;
-	  el.style.display = 'inline-block';
-	}
-
-	function showPresetToast(msg = 'Preset applicato', ms = 2200){
-	  const t = document.getElementById('presetToast');
-	  if(!t) return;
-	  t.textContent = msg;
-	  t.style.opacity = '1';
-	  clearTimeout(t._hideTimer);
-	  t._hideTimer = setTimeout(()=>{ t.style.opacity = '0'; }, ms);
-	}
-
-	/* ---------- DOMContentLoaded ---------- */
-	document.addEventListener('DOMContentLoaded', () => {
-	  const openFileBtn = document.getElementById('openFileBtn');
-	  const fileInput = document.getElementById('fileInput');
-	  const openPresetBtn = document.getElementById('openPresetBtn');
-	  const presetInput = document.getElementById('presetInput');
-	  const exportPresetBtn = document.getElementById('exportPresetBtn');
-	  const toggleAllCatsEl = document.getElementById('toggleAllCats');
-
-	  /* ---------- Caricamento Excel (single-step) ---------- */
-	  document.getElementById('localExcelBtn').addEventListener('click', () => {
-		  document.getElementById('fileInput').click();
-		});
-
-
-	  fileInput.addEventListener('change', (ev) => {
-		const f = ev.target.files[0];
-		if (!f) return;
-		const reader = new FileReader();
-		reader.onload = (e) => {
-		  try {
-			const data = new Uint8Array(e.target.result);
-			const wb = XLSX.read(data, { type: 'array' });
-			workbookData = {}; allCategories = [];
-			wb.SheetNames.forEach(name => {
-			  const ws = wb.Sheets[name];
-			  const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-			  if (json.length < 2) return;
-			  const headers = json[0].map(h => String(h).trim());
-			  const rows = json.slice(1).map(r => {
-				const obj = {};
-				headers.forEach((h, i) => obj[h] = r[i] ?? "");
-				return obj;
-			  });
-			  const normalized = rows.map(r => ({
-				ID: r['ID'] || r['Id'] || r['id'] || '',
-				Tema: r['Tema'] || r['tema'] || name,
-				Domanda: r['Domanda'] || r['Question'] || '',
-				Tipologia: r['Tipologia'] || r['Type'] || '',
-				RispostaA: r['Risposta A'] || r['RispostaA'] || r['A'] || '',
-				RispostaB: r['Risposta B'] || r['RispostaB'] || r['B'] || '',
-				RispostaC: r['Risposta C'] || r['RispostaC'] || r['C'] || '',
-				RispostaD: r['Risposta D'] || r['RispostaD'] || r['D'] || '',
-				RispostaE: r['Risposta E'] || r['RispostaE'] || r['E'] || '',
-				RispostaF: r['Risposta F'] || r['RispostaF'] || r['F'] || '',
-				Difficolta: r['Difficoltà'] || r['Difficolta'] || r['Difficulty'] || '',
-				Data: r['Data Creazione'] || r['Data'] || r['Date'] || ''
-			  }));
-
-			  // crea key troncata e assicurati unicità
-			  const baseKey = name.slice(0, TRUNC_LEN);
-			  let uniqueKey = baseKey;
-			  let suffix = 1;
-			  while (workbookData.hasOwnProperty(uniqueKey)) {
-				const suf = String(suffix++);
-				uniqueKey = baseKey.slice(0, TRUNC_LEN - suf.length) + suf;
-			  }
-			  workbookData[uniqueKey] = normalized;
-			  allCategories.push({ key: uniqueKey, full: name });
-			});
-
-			// ricostruisci UI filtri in modo sicuro
-			buildFiltersUI();
-
-			// ripara eventuali checkbox malformate ricostruendole da allCategories
-			repairCatsFromAllCategories();
-
-			const sheets = Object.keys(workbookData).length;
-			const statusArea = document.getElementById('statusArea');
-			if (statusArea) statusArea.innerText = `File caricato: ${sheets} fogli`;
-			showSheetsCount(sheets);
-		  } catch (err) {
-			alert('Errore parsing Excel: ' + (err && err.message ? err.message : err));
-		  }
-		};
-		reader.readAsArrayBuffer(f);
-		fileInput.value = '';
-	  });
-
-	  /* ---------- Build filtri in modo sicuro ---------- */
-	  function buildFiltersUI() {
-		normalizeAllCategories();
-		const typesArea = document.getElementById('typesArea');
-		const catsArea = document.getElementById('catsArea');
-		typesArea.innerHTML = ''; catsArea.innerHTML = '';
-
-		allTypes.forEach(t => {
-		  const div = document.createElement('div');
-		  div.className = 'chk';
-		  const input = document.createElement('input');
-		  input.type = 'checkbox';
-		  input.className = 'typeChk';
-		  input.dataset.type = t;
-		  input.checked = true;
-		  const label = document.createElement('label');
-		  label.appendChild(input);
-		  const span = document.createElement('span');
-		  span.textContent = ' ' + t;
-		  label.appendChild(span);
-		  div.appendChild(label);
-		  typesArea.appendChild(div);
-		});
-
-		allCategories.forEach(c => {
-		  const div = document.createElement('div');
-		  div.className = 'chk';
-		  const input = document.createElement('input');
-		  input.type = 'checkbox';
-		  input.className = 'catChk';
-		  input.dataset.cat = c.key;
-		  input.checked = true;
-		  const label = document.createElement('label');
-		  label.appendChild(input);
-		  const span = document.createElement('span');
-		  span.className = 'cat-label';
-		  span.textContent = c.full;
-		  span.title = c.full;
-		  label.appendChild(span);
-		  div.appendChild(label);
-		  catsArea.appendChild(div);
-		});
-
-		if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
-		setupDifficultySync();
-	  }
-
-	  /* ---------- Ripara categorie malformate (ricostruzione sicura) ---------- */
-	  function repairCatsFromAllCategories(){
-		normalizeAllCategories();
-		const catsArea = document.getElementById('catsArea');
-		if(!catsArea) return;
-		catsArea.innerHTML = '';
-		allCategories.forEach(c => {
-		  const wrapper = document.createElement('div');
-		  wrapper.className = 'chk';
-		  const input = document.createElement('input');
-		  input.type = 'checkbox';
-		  input.className = 'catChk';
-		  input.dataset.cat = c.key;
-		  input.checked = true;
-		  const label = document.createElement('label');
-		  label.appendChild(input);
-		  const span = document.createElement('span');
-		  span.className = 'cat-label';
-		  span.textContent = c.full;
-		  span.title = c.full;
-		  label.appendChild(span);
-		  wrapper.appendChild(label);
-		  catsArea.appendChild(wrapper);
-		});
-		if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb=>cb.checked);
-	  }
-
-	  /* ---------- Preset import/export (single-step, compatibile full/key) ---------- */
-	  openPresetBtn.addEventListener('click', () => presetInput.click());
-
-	  presetInput.addEventListener('change', (ev) => {
-		const f = ev.target.files[0];
-		if (!f) return;
-		const reader = new FileReader();
-		reader.onload = (e) => {
-		  const lines = e.target.result.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-		  document.querySelectorAll('.catChk').forEach(cb => cb.checked = false);
-		  lines.forEach(line => {
-			document.querySelectorAll('.catChk').forEach(cb => {
-			  const key = cb.dataset.cat;
-			  const catObj = allCategories.find(ac => ac.key === key);
-			  const full = catObj ? catObj.full : '';
-			  if (key === line || full === line) cb.checked = true;
-			});
-		  });
-		  if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
-		  showPresetToast();
-		};
-		reader.readAsText(f, 'utf-8');
-		presetInput.value = '';
-	  });
-
-	  exportPresetBtn.addEventListener('click', () => {
-		const selected = Array.from(document.querySelectorAll('.catChk')).filter(cb => cb.checked).map(cb => cb.dataset.cat);
-		if (selected.length === 0) return alert('Nessuna categoria selezionata');
-		const blob = new Blob([selected.join('\n')], { type: 'text/plain;charset=utf-8' });
-		saveAs(blob, `preset_categorie_${Date.now()}.txt`);
-	  });
-
-	  /* ---------- Toggle tutte le categorie ---------- */
-	  if (toggleAllCatsEl) {
-		toggleAllCatsEl.addEventListener('change', (e) => {
-		  const v = e.target.checked;
-		  document.querySelectorAll('.catChk').forEach(cb => cb.checked = v);
-		});
-	  }
-
-	  /* ---------- Sincronizzazione difficoltà ---------- */
-	  function setupDifficultySync() {
-		const diffAllCheckbox = document.getElementById('diff_all');
-		const diffCheckboxes = Array.from(document.querySelectorAll('.diffChk'));
-		if (!diffAllCheckbox) return;
-		diffAllCheckbox.addEventListener('change', (e) => {
-		  const checked = e.target.checked;
-		  diffCheckboxes.forEach(cb => cb.checked = checked);
-		});
-		diffCheckboxes.forEach(cb => {
-		  cb.addEventListener('change', () => {
-			const allChecked = diffCheckboxes.every(d => d.checked);
-			diffAllCheckbox.checked = allChecked;
-		  });
-		});
-	  }
-	  setupDifficultySync();
-
-	  /* ---------- Filtri lettura con cap per 'Risposta aperta' (calcolo pesi) ---------- */
-	  function getSelectedFilters() {
-		const typeChecks = Array.from(document.querySelectorAll('.typeChk')).filter(i => i.checked).map(i => i.dataset.type);
-		if (typeChecks.length === 0) throw new Error('Seleziona almeno una tipologia');
-
-		const isOpenType = t => (t||'').toLowerCase().includes('risposta aperta');
-		const othersCount = typeChecks.filter(t => !isOpenType(t)).length;
-
-		const baseWeights = {};
-		typeChecks.forEach(t => {
-		  if (isOpenType(t)) {
-			if (othersCount === 0) baseWeights[t] = 1;
-			else baseWeights[t] = (0.10 * othersCount) / (1 - 0.10);
-		  } else {
-			baseWeights[t] = 1;
-		  }
-		});
-
-		const totalW = Object.values(baseWeights).reduce((a,b)=>a+b,0);
-		const typePct = {};
-		typeChecks.forEach(t => typePct[t] = (baseWeights[t] / totalW));
-
-		const selectedCats = Array.from(document.querySelectorAll('.catChk')).filter(cb => cb.checked).map(cb => cb.dataset.cat);
-		if (selectedCats.length === 0) throw new Error('Seleziona almeno una categoria');
-
-		const allDiff = document.getElementById('diff_all') && document.getElementById('diff_all').checked;
-		const diffChecks = Array.from(document.querySelectorAll('.diffChk')).filter(i => i.checked).map(i => i.dataset.diff);
-		const diffs = allDiff ? ['all'] : (diffChecks.length ? diffChecks : ['all']);
-
-		const order = document.getElementById('orderSelect').value;
-		const desc = document.getElementById('descCheckbox').checked;
-		const totalN = Math.max(1, parseInt(document.getElementById('totalInput').value || 0));
-
-		return { typePct, typeChecks, selectedCats, diffs, order, desc, totalN };
-	  }
-
-	  /* ---------- Pool e filtri con conteggio risposte ---------- */
-	  function filterPoolByDifficulty(pool, diffs){
-		if(diffs.includes('all')) return pool;
-		const wantedCounts = diffs.map(d => countStars(d));
-		return pool.filter(q => {
-		  const qStars = countStars(q.Difficolta || "");
-		  return wantedCounts.includes(qStars);
-		});
-	  }
-
-	  function buildPool(selectedCats, diffs){
-		let pool = [];
-		selectedCats.forEach(catKey => {
-		  const arr = workbookData[catKey] || [];
-		  const filtered = filterPoolByDifficulty(arr, diffs);
-		  filtered.forEach(q => {
-			const copy = Object.assign({}, q);
-			copy._category = catKey;
-			copy._normTipologia = norm(copy.Tipologia);
-			copy._normCategory = norm(copy._category);
-			copy._answersCount = ['RispostaA','RispostaB','RispostaC','RispostaD','RispostaE','RispostaF']
-			  .map(k => (copy[k]||'').toString().trim()).filter(Boolean).length;
-			pool.push(copy);
-		  });
-		});
-		return pool;
-	  }
-
-	  /* ---------- Allocazione e sampling preferenziale ---------- */
-	  function allocateCounts(N, typePct, typeChecks, selectedCats, pool){
-		const targetType = {};
-		typeChecks.forEach(t => targetType[t] = Math.round(N * (typePct[t] || 0)));
-		let sum = Object.values(targetType).reduce((a,b)=>a+b,0);
-		while(sum !== N){
-		  const diff = N - sum;
-		  const key = typeChecks[Math.abs(diff) % typeChecks.length];
-		  targetType[key] += Math.sign(diff);
-		  sum = Object.values(targetType).reduce((a,b)=>a+b,0);
-		}
-		const perCellTargets = {};
-		typeChecks.forEach(t => {
-		  perCellTargets[t] = {};
-		  const tNorm = norm(t);
-		  const poolType = pool.filter(q => q._normTipologia === tNorm);
-		  const countsByCat = {};
-		  selectedCats.forEach(c => {
-			const cNorm = norm(c);
-			countsByCat[c] = poolType.filter(q => q._normCategory === cNorm).length;
-		  });
-		  const totalAvailable = Object.values(countsByCat).reduce((a,b)=>a+b,0);
-		  if(totalAvailable === 0){
-			selectedCats.forEach(c => perCellTargets[t][c] = 0);
-		  } else {
-			selectedCats.forEach(c => perCellTargets[t][c] = Math.round(targetType[t] * (countsByCat[c] / totalAvailable)));
-			let s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
-			while(s !== targetType[t]){
-			  const diff = targetType[t] - s;
-			  const cat = selectedCats[Math.abs(diff) % selectedCats.length];
-			  perCellTargets[t][cat] += Math.sign(diff);
-			  s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
-			}
-		  }
-		});
-		return { targetType, perCellTargets };
-	  }
-
-	  function sampleQuestions(perCellTargets, pool){
-		const chosen = []; const usedIDs = new Set();
-		for(const t of Object.keys(perCellTargets)){
-		  const tNorm = norm(t);
-		  for(const c of Object.keys(perCellTargets[t])){
-			const need = perCellTargets[t][c];
-			if(need <= 0) continue;
-			const cNorm = norm(c);
-			const candidatesAll = pool.filter(q => q._normTipologia === tNorm && q._normCategory === cNorm && !usedIDs.has(q.ID));
-			const candidatesWithAnswers = candidatesAll.filter(q => q._answersCount > 0);
-			const candidatesNoAnswers = candidatesAll.filter(q => q._answersCount === 0);
-			const candidates = candidatesWithAnswers.length ? candidatesWithAnswers : candidatesNoAnswers;
-			shuffleArray(candidates);
-			const take = candidates.slice(0, need);
-			take.forEach(q => { chosen.push(q); usedIDs.add(q.ID); });
-		  }
-		}
-		return { chosen, usedIDs };
-	  }
-
-	  function fillRemaining(N, chosen, pool, usedIDs){
-		let remaining = N - chosen.length;
-		if(remaining <= 0) return chosen;
-		const candidates = pool.filter(q => !usedIDs.has(q.ID));
-		shuffleArray(candidates);
-		const take = candidates.slice(0, remaining);
-		take.forEach(q => chosen.push(q));
-		return chosen;
-	  }
-
-	  /* ---------- Enforce cap on open questions (max 10%) ---------- */
-	  function enforceOpenCap(chosen, pool, usedIDs, cfg, openQuestionPredicate){
-		const N = cfg.totalN;
-		const selectedTypes = cfg.typeChecks || [];
-		const onlyOpenSelected = selectedTypes.length === 1 && (selectedTypes[0]||'').toLowerCase().includes('risposta aperta');
-		if (onlyOpenSelected) return { chosen, usedIDs };
-
-		const maxOpen = Math.floor(0.10 * N);
-		const isOpen = q => openQuestionPredicate(q);
-		let openIndices = [];
-		chosen.forEach((q, idx) => { if (isOpen(q)) openIndices.push(idx); });
-
-		if (openIndices.length <= maxOpen) return { chosen, usedIDs };
-
-		const toReplace = openIndices.length - maxOpen;
-		let replaced = 0;
-		const nonOpenCandidates = pool.filter(q => !usedIDs.has(q.ID) && !isOpen(q) && (q._answersCount > 0));
-		shuffleArray(nonOpenCandidates);
-
-		for(let i = openIndices.length - 1; i >= 0 && replaced < toReplace; i--){
-		  const idx = openIndices[i];
-		  const replacement = nonOpenCandidates.shift();
-		  if (!replacement) break;
-		  const removed = chosen[idx];
-		  if (removed && removed.ID) usedIDs.delete(removed.ID);
-		  chosen[idx] = replacement;
-		  usedIDs.add(replacement.ID);
-		  replaced++;
-		}
-
-		return { chosen, usedIDs };
-	  }
-
-	  /* ---------- Anteprima conteggi ---------- */
-	  document.getElementById('previewBtn').addEventListener('click', () => {
-		try {
-		  const cfg = getSelectedFilters();
-		  const pool = buildPool(cfg.selectedCats, cfg.diffs);
-		  const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
-		  document.getElementById('previewArea').innerHTML = `
-			Pool totale disponibile: <strong>${pool.length}</strong><br>
-			Target per tipologia: <pre style="color:#e9e2c6">${JSON.stringify(alloc.targetType,null,2)}</pre>
-			Target per cella (tipo x categoria): <pre style="color:#e9e2c6">${JSON.stringify(alloc.perCellTargets,null,2)}</pre>
-		  `;
-		} catch(err){
-		  alert(err.message);
-		}
-	  });
-
-	  /* ---------- Export PDF (con enforceOpenCap) ---------- */
-	  document.getElementById('exportBtn').addEventListener('click', async () => {
-		try {
-		  const cfg = getSelectedFilters();
-		  const pool = buildPool(cfg.selectedCats, cfg.diffs);
-		  if(pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
-		  const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
-		  let { chosen, usedIDs } = sampleQuestions(alloc.perCellTargets, pool);
-		  chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
-
-		  const openQuestionPredicate = q => (q.Tipologia || q._normTipologia || '').toLowerCase().includes('risposta aperta');
-		  ({ chosen, usedIDs } = enforceOpenCap(chosen, pool, usedIDs, cfg, openQuestionPredicate));
-
-		  if (chosen.length < cfg.totalN) chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
-
-		  if(cfg.order === 'random') shuffleArray(chosen);
-		  else if(cfg.order === 'alpha_global') chosen.sort((a,b)=> (a.Domanda||'').localeCompare(b.Domanda||''));
-		  else if(cfg.order === 'alpha_cat') chosen.sort((a,b)=> a._category !== b._category ? a._category.localeCompare(b._category) : (a.Domanda||'').localeCompare(b.Domanda||''));
-		  else if(cfg.order === 'difficulty') chosen.sort((a,b)=> countStars(a.Difficolta||'') - countStars(b.Difficolta||''));
-		  if(cfg.desc) chosen.reverse();
-
-		  selectedQuestions = chosen.slice(0, cfg.totalN);
-		  await generatePdf(selectedQuestions, cfg);
-		} catch(err){
-		  alert(err.message);
-		}
-	  });
-
-	  /* ---------- Genera PDF con html2pdf (senza appendice soluzioni) ---------- */
-	  async function generatePdf(questions, cfg){
-		const container = document.createElement('div');
-		container.style.width = '1200px';
-		container.style.padding = '24px';
-		container.style.fontFamily = 'Arial, Helvetica, sans-serif';
-		container.style.color = '#111';
-		container.style.background = '#fff';
-		container.style.position = 'relative';
-
-		const styleInline = document.createElement('style');
-		styleInline.innerHTML = `.real-answer{background:#691258;color:#fff;padding:4px 6px;border-radius:4px;display:inline-block}`;
-		container.appendChild(styleInline);
-
-		const header = document.createElement('div');
-		header.innerHTML = `<h1 style="margin:0;color:#120E01">NelGrimorio Quiz NERD</h1>
-		  <div style="margin-top:6px">Totale domande: <strong>${questions.length}</strong></div>
-		  <div style="margin-top:6px">Filtri: Difficoltà=${cfg.diffs.join(',')}, Ordinamento=${cfg.order}, Decrescente=${cfg.desc}</div>
-		  <hr style="margin:12px 0">`;
-		container.appendChild(header);
-
-		questions.forEach((q, idx) => {
-		  const qDiv = document.createElement('div');
-		  qDiv.style.marginBottom = '12px';
-		  qDiv.innerHTML = `<div style="font-weight:700">${idx+1}. ${escapeHtml(q.Domanda)}</div>`;
-		  const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
-		  if(answers.length){
-			answers.forEach((a,i) => {
-			  const p = document.createElement('div');
-			  p.style.marginLeft = '12px';
-			  let text = a;
-			  let isReal = false;
-			  if (text.includes('###')) {
-				text = text.replace(/###/g, '').trim();
-				isReal = true;
-			  }
-			  p.innerHTML = `<strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(text)}`;
-			  if (isReal) p.classList.add('real-answer');
-			  qDiv.appendChild(p);
-			});
-		  } else {
-			const p = document.createElement('div'); p.style.marginLeft='12px'; p.innerHTML = `<em>Risposta aperta</em>`; qDiv.appendChild(p);
-		  }
-		  const meta = document.createElement('div'); meta.style.marginTop='6px'; meta.style.color='#666'; meta.style.fontSize='12px';
-		  meta.innerText = `Categoria: ${q._category} • Tipologia: ${q.Tipologia} • Difficoltà: ${q.Difficolta}`;
-		  qDiv.appendChild(meta);
-		  container.appendChild(qDiv);
-		  const hr = document.createElement('hr'); hr.style.margin='8px 0'; container.appendChild(hr);
-		});
-
-		const previewHolder = document.getElementById("preview-container");
-		if (previewHolder) {
-		  previewHolder.innerHTML = "";
-		  previewHolder.appendChild(container);
-		} else {
-		  document.body.appendChild(container);
-		}
-
-		const opt = { margin:10, filename:`quiz_export_${Date.now()}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'pt',format:'a4',orientation:'portrait'} };
-		try {
-		  if (!container.innerHTML || container.innerHTML.trim().length < 20) throw new Error('Container PDF vuoto prima della conversione');
-		  await html2pdf().set(opt).from(container).save();
-		} catch(err){
-		  alert('Errore durante la generazione del PDF: ' + (err && err.message ? err.message : err));
-		} finally {
-		  if (!document.getElementById("preview-container") && container && container.parentNode) container.parentNode.removeChild(container);
-		}
-	  }
-
-	  /* ---------- Viewer ---------- */
-	  let currentIndex = 0;
-	  function openViewer(questions){
-		currentIndex = 0;
-		document.getElementById('viewer').style.display = 'flex';
-		renderSlide();
-	  }
-	  function renderSlide(){
-		const container = document.getElementById('slideContent');
-		const q = selectedQuestions[currentIndex];
-		const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
-		container.innerHTML = `<h2 style="margin:0 0 8px 0">Domanda ${currentIndex+1} / ${selectedQuestions.length}</h2>
-		  <h3 style="margin:0 0 12px 0">${escapeHtml(q.Domanda)}</h3>
-		  <div>${answers.length ? answers.map((a,i)=>{
-			let text = a;
-			let cls = '';
-			if (text.includes('###')) { text = text.replace(/###/g,'').trim(); cls = 'real-answer'; }
-			return `<div style="margin:6px 0"><strong>${String.fromCharCode(65+i)})</strong> <span class="${cls}">${escapeHtml(text)}</span></div>`;
-		  }).join('') : '<em>Risposta aperta</em>'}</div>
-		  <div style="margin-top:12px;color:#666">Categoria: ${escapeHtml(q._category)} • Tipologia: ${escapeHtml(q.Tipologia)} • Difficoltà: ${escapeHtml(q.Difficolta)}</div>`;
-	  }
-	  document.getElementById('nextQ').addEventListener('click', ()=>{ if(currentIndex < selectedQuestions.length-1) currentIndex++; renderSlide(); });
-	  document.getElementById('prevQ').addEventListener('click', ()=>{ if(currentIndex > 0) currentIndex--; renderSlide(); });
-	  document.getElementById('closeViewer').addEventListener('click', ()=>{ document.getElementById('viewer').style.display='none'; });
-	  document.getElementById('fsBtn').addEventListener('click', ()=>{ const el=document.getElementById('slide'); if(el.requestFullscreen) el.requestFullscreen(); });
-
-	  /* ---------- Apri sessione Gioco (applica enforceOpenCap anche qui) ---------- */
-	  document.getElementById('startGameBtn').addEventListener('click', () => {
-		try {
-		  const cfg = getSelectedFilters();
-		  const pool = buildPool(cfg.selectedCats, cfg.diffs);
-		  if(pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
-
-		  shuffleArray(pool);
-		  let chosen = pool.slice(0, cfg.totalN);
-		  const usedIDs = new Set(chosen.map(q => q.ID));
-		  const openQuestionPredicate = q => (q.Tipologia || q._normTipologia || '').toLowerCase().includes('risposta aperta');
-		  ({ chosen } = enforceOpenCap(chosen, pool, usedIDs, cfg, openQuestionPredicate));
-		  if (chosen.length < cfg.totalN) chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
-
-		  selectedQuestions = chosen.slice(0, cfg.totalN);
-		  openViewer(selectedQuestions);
-		} catch(err){ alert(err.message); }
-	  });
-
-	}); // end DOMContentLoaded
-	
-	
-	
-		/* ---------- Google Drive integration (OAuth2 + download + parse) ---------- */
-	const GDRIVE_CLIENT_ID = '641611618956-b3fq35ednc26bpce0e4562mt3f4779s1.apps.googleusercontent.com'; // <--- https://console.cloud.google.com/auth/overview?project=nel-grimorio-quiz-nerd
-	const GDRIVE_API_KEY = '';     // opzionale, utile per files.list quota
-	const GDRIVE_DEFAULT_FILE_ID = "14fGXwzyPOaj-1upHKwa_1q6K3CaH7Y9A";
-
-
-	// Scopes: solo lettura Drive
-	const GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
-
-	// UI elements (assicurati che esistano nel DOM)
-	function ensureDriveButtons() {
-	  // crea pulsanti se non esistono
-	  if (!document.getElementById('driveConnectBtn')) {
-		const container = document.querySelector('.card'); // primo card left
-		if (!container) return;
-		const row = document.createElement('div');
-		row.style.marginTop = '10px';
-		row.className = 'row';
-		row.innerHTML = `
-		  <button id="driveConnectBtn" class="ghost" style="margin-right:8px">Connetti Google Drive</button>
-		  <button id="drivePickBtn" class="ghost" style="margin-right:8px;display:none">Scegli file da Drive</button>
-		  <button id="driveSignOutBtn" class="ghost" style="display:none">Disconnetti Drive</button>
-		  <span id="driveStatusLabel" class="small" style="margin-left:8px;color:#e9e2c6;display:none"></span>
-		`;
-		container.appendChild(row);
-
-		document.getElementById('driveConnectBtn').addEventListener('click', initGapiAndSignIn);
-		document.getElementById('drivePickBtn').addEventListener('click', showDriveFilePicker);
-		document.getElementById('driveSignOutBtn').addEventListener('click', signOutDrive);
-	  }
-	}
-
-	// inizializza gapi client
-	function initGapiClient() {
-	  return new Promise((resolve, reject) => {
-		if (!window.gapi) return reject(new Error('gapi non caricato'));
-		gapi.load('client:auth2', async () => {
-		  try {
-			await gapi.client.init({
-			  apiKey: GDRIVE_API_KEY || undefined,
-			  clientId: GDRIVE_CLIENT_ID,
-			  discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-			  scope: GDRIVE_SCOPES
-			});
-			resolve();
-		  } catch (err) { reject(err); }
-		});
-	  });
-	}
-
-	// avvia sign-in e mostra UI
-	async function initGapiAndSignIn() {
-	  try {
-		await initGapiClient();
-		const auth = gapi.auth2.getAuthInstance();
-		if (!auth.isSignedIn.get()) {
-		  await auth.signIn();
-		}
-		onDriveSignedIn();
-	  } catch (err) {
-		console.error('GAPI init/signin error', err);
-		alert('Errore connessione Google Drive: ' + (err.message || err));
-	  }
-	}
-
-	function onDriveSignedIn() {
-	  document.getElementById('driveConnectBtn').style.display = 'none';
-	  document.getElementById('drivePickBtn').style.display = 'inline-block';
-	  document.getElementById('driveSignOutBtn').style.display = 'inline-block';
-	  const lbl = document.getElementById('driveStatusLabel');
-	  if (lbl) { lbl.style.display = 'inline-block'; lbl.textContent = 'Connesso a Google Drive'; }
-	  // se abbiamo fileId salvato, proviamo a caricarlo automaticamente
-	  const savedId = localStorage.getItem('gdrive_last_fileid');
-	  if (savedId) {
-		// carica in background (non forzare se l'utente preferisce scegliere)
-		tryLoadDriveFileById(savedId);
-	  }
-	}
-
-	// sign out
-	function signOutDrive() {
-	  const auth = gapi.auth2.getAuthInstance();
-	  if (auth && auth.isSignedIn.get()) auth.signOut();
-	  document.getElementById('driveConnectBtn').style.display = 'inline-block';
-	  document.getElementById('drivePickBtn').style.display = 'none';
-	  document.getElementById('driveSignOutBtn').style.display = 'none';
-	  const lbl = document.getElementById('driveStatusLabel');
-	  if (lbl) { lbl.style.display = 'inline-block'; lbl.textContent = 'Disconnesso'; setTimeout(()=>lbl.style.display='none',2000); }
-	}
-
-	// mostra una semplice "picker" interna: elenca file .xlsx/.xls e lascia scegliere
-	async function showDriveFilePicker() {
-	  try {
-		const token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
-		// files.list: cerca xlsx/xls e google sheets (opzionale)
-		const q = "mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' or mimeType='application/vnd.ms-excel' or mimeType='application/vnd.google-apps.spreadsheet'";
-		const res = await gapi.client.drive.files.list({
-		  pageSize: 50,
-		  fields: 'files(id,name,mimeType,modifiedTime,size)',
-		  q
-		});
-		const files = (res.result && res.result.files) || [];
-		if (!files.length) return alert('Nessun file Excel trovato nel tuo Drive');
-		// costruisci modal semplice
-		const modal = document.createElement('div');
-		modal.style.position = 'fixed';
-		modal.style.inset = '0';
-		modal.style.background = 'rgba(0,0,0,0.6)';
-		modal.style.display = 'flex';
-		modal.style.alignItems = 'center';
-		modal.style.justifyContent = 'center';
-		modal.style.zIndex = 10000;
-		const box = document.createElement('div');
-		box.style.background = '#fff';
-		box.style.color = '#111';
-		box.style.padding = '16px';
-		box.style.borderRadius = '8px';
-		box.style.maxHeight = '70vh';
-		box.style.overflow = 'auto';
-		box.style.width = '640px';
-		box.innerHTML = `<h3 style="margin-top:0">Scegli file da Google Drive</h3>`;
-		files.forEach(f => {
-		  const row = document.createElement('div');
-		  row.style.display = 'flex';
-		  row.style.justifyContent = 'space-between';
-		  row.style.alignItems = 'center';
-		  row.style.padding = '6px 0';
-		  row.style.borderBottom = '1px solid #eee';
-		  row.innerHTML = `<div style="flex:1;overflow:hidden"><strong style="display:block">${escapeHtml(f.name)}</strong><small style="color:#666">${f.mimeType} • ${f.modifiedTime || ''}</small></div>
-			<div style="margin-left:12px"><button class="chooseDriveFileBtn ghost" data-id="${f.id}" data-name="${escapeHtml(f.name)}">Scegli</button></div>`;
-		  box.appendChild(row);
-		});
-		const closeBtn = document.createElement('div');
-		closeBtn.style.textAlign = 'right';
-		closeBtn.innerHTML = `<button class="ghost">Chiudi</button>`;
-		closeBtn.querySelector('button').addEventListener('click', ()=>document.body.removeChild(modal));
-		box.appendChild(closeBtn);
-		modal.appendChild(box);
-		document.body.appendChild(modal);
-
-		modal.querySelectorAll('.chooseDriveFileBtn').forEach(b => {
-		  b.addEventListener('click', async (ev) => {
-			const id = ev.currentTarget.dataset.id;
-			const name = ev.currentTarget.dataset.name;
-			document.body.removeChild(modal);
-			await tryLoadDriveFileById(id, name);
-		  });
-		});
-	  } catch (err) {
-		console.error('Drive picker error', err);
-		alert('Errore durante l\'elenco dei file Drive: ' + (err.message || err));
-	  }
-	}
-
-	// tenta a scaricare il file da Drive e passare l'ArrayBuffer al parser
-	async function tryLoadDriveFileById(fileId, filename) {
-	  try {
-		const token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
-		// se è Google Sheets (mime google-apps.spreadsheet) dobbiamo esportare in xlsx
-		// prima otteniamo metadata per capire mimeType
-		const meta = await gapi.client.drive.files.get({ fileId, fields: 'id,name,mimeType' });
-		const mime = meta.result.mimeType;
-		let downloadUrl;
-		let isGoogleSheet = false;
-		if (mime === 'application/vnd.google-apps.spreadsheet') {
-		  // esporta in xlsx
-		  downloadUrl = `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`;
-		  isGoogleSheet = true;
-		} else {
-		  downloadUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
-		}
-
-		const res = await fetch(downloadUrl, { headers: { Authorization: 'Bearer ' + token } });
-		if (!res.ok) throw new Error('Download fallito: ' + res.status);
-		const arrayBuffer = await res.arrayBuffer();
-
-		// salva fileId per ricarica automatica
-		localStorage.setItem('gdrive_last_fileid', fileId);
-		if (filename) localStorage.setItem('gdrive_last_filename', filename);
-
-		// integrazione con la pipeline esistente: parse e build UI
-		await handleDriveArrayBuffer(arrayBuffer, filename || meta.result.name);
-	  } catch (err) {
-		console.error('Errore download Drive file', err);
-		alert('Errore download file da Drive: ' + (err.message || err));
-	  }
-	}
-	
-	function updateDriveButtonLabel(loaded) {
-	  const btn = document.getElementById('driveExcelBtn');
-	  if (!btn) return;
-	  btn.textContent = loaded ? "Aggiorna Excel dal Drive" : "Carica Excel dal Drive";
-	}
-
-	document.getElementById('driveExcelBtn').addEventListener('click', async () => {
-	  try {
-		await initGapiAndSignIn(); // login OAuth
-		await tryLoadDriveFileById(GDRIVE_DEFAULT_FILE_ID); // carica il file
-		updateDriveButtonLabel(true); // cambia testo in "Aggiorna"
-	  } catch (err) {
-		alert("Errore caricamento file da Drive: " + (err.message || err));
-	  }
-	});
-
-	// funzione che integra l'ArrayBuffer scaricato con la tua logica esistente
-	// questa funzione esegue il parsing XLSX e popola workbookData/allCategories e UI
-	async function handleDriveArrayBuffer(arrayBuffer, filename) {
-	  try {
-		// parsing con XLSX (usa la libreria già inclusa)
-		const data = new Uint8Array(arrayBuffer);
-		const wb = XLSX.read(data, { type: 'array' });
-
-		// reset strutture
-		workbookData = {}; allCategories = [];
-
-		wb.SheetNames.forEach(name => {
-		  const ws = wb.Sheets[name];
-		  const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-		  if (json.length < 2) return;
-		  const headers = json[0].map(h => String(h).trim());
-		  const rows = json.slice(1).map(r => {
-			const obj = {};
-			headers.forEach((h, i) => obj[h] = r[i] ?? "");
-			return obj;
-		  });
-		  const normalized = rows.map(r => ({
-			ID: r['ID'] || r['Id'] || r['id'] || '',
-			Tema: r['Tema'] || r['tema'] || name,
-			Domanda: r['Domanda'] || r['Question'] || '',
-			Tipologia: r['Tipologia'] || r['Type'] || '',
-			RispostaA: r['Risposta A'] || r['RispostaA'] || r['A'] || '',
-			RispostaB: r['Risposta B'] || r['RispostaB'] || r['B'] || '',
-			RispostaC: r['Risposta C'] || r['RispostaC'] || r['C'] || '',
-			RispostaD: r['Risposta D'] || r['RispostaD'] || r['D'] || '',
-			RispostaE: r['Risposta E'] || r['RispostaE'] || r['E'] || '',
-			RispostaF: r['Risposta F'] || r['RispostaF'] || r['F'] || '',
-			Difficolta: r['Difficoltà'] || r['Difficolta'] || r['Difficulty'] || '',
-			Data: r['Data Creazione'] || r['Data'] || r['Date'] || ''
-		  }));
-
-		  // crea key troncata e assicurati unicità (stesso comportamento del parser locale)
-		  const baseKey = name.slice(0, TRUNC_LEN);
-		  let uniqueKey = baseKey;
-		  let suffix = 1;
-		  while (workbookData.hasOwnProperty(uniqueKey)) {
-			const suf = String(suffix++);
-			uniqueKey = baseKey.slice(0, TRUNC_LEN - suf.length) + suf;
-		  }
-		  workbookData[uniqueKey] = normalized;
-		  allCategories.push({ key: uniqueKey, full: name });
-		});
-
-		// aggiorna UI come se avessi caricato il file localmente
-		buildFiltersUI();
-		repairCatsFromAllCategories();
-		const sheets = Object.keys(workbookData).length;
-		const statusArea = document.getElementById('statusArea');
-		if (statusArea) statusArea.innerText = `File caricato da Drive: ${sheets} fogli (${filename || ''})`;
-		showSheetsCount(sheets);
-		showPresetToast('File caricato da Drive');
-		
-		updateDriveButtonLabel(true);
-
-
-	  } catch (err) {
-		console.error('Errore parsing Drive ArrayBuffer', err);
-		alert('Errore parsing file Excel da Drive: ' + (err.message || err));
-	  }
-	}
-
-	/* ---------- Auto init UI ---------- */
-	document.addEventListener('DOMContentLoaded', () => {
-	  ensureDriveButtons();
-	  // se l'utente è già signed-in (gapi potrebbe non essere inizializzato), carichiamo gapi in background
-	  if (window.gapi) {
-		// non forzare signin, solo init client so we can show pick button if already signed
-		initGapiClient().then(() => {
-		  const auth = gapi.auth2.getAuthInstance();
-		  if (auth && auth.isSignedIn.get()) onDriveSignedIn();
-		}).catch(()=>{/* ignore */});
-	  } else {
-		// carichiamo gapi script dinamicamente se non presente
-		const s = document.createElement('script');
-		s.src = 'https://apis.google.com/js/api.js';
-		s.onload = () => {
-		  initGapiClient().then(() => {
-			const auth = gapi.auth2.getAuthInstance();
-			if (auth && auth.isSignedIn.get()) onDriveSignedIn();
-		  }).catch(()=>{/* ignore */});
-		};
-		document.head.appendChild(s);
-	  }
-	});
-
-
+/* ---------- Stato e helper ---------- */
+let workbookData = {}; // keyed by truncated key
+let allTypes = ['4 Risposte','6 Risposte','Vero/Falso','Frase interrotta a 2 risposte','Continua la risposta','Risposta aperta'];
+let selectedQuestions = [];
+let allCategories = []; // array of { key, full }
+const TRUNC_LEN = 25;
+
+function norm(s){ return (s||'').toString().trim().toLowerCase(); }
+function normalizeStars(s){ if(!s) return ''; return s.replace(/[\u2605\u2B50★☆✶✷✸✹✺✻✼✽✾✿]/g,'⭐').trim(); }
+function countStars(s){ return (normalizeStars(s).match(/⭐/g)||[]).length; }
+function escapeHtml(s){ if(!s) return ''; return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
+function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
+
+/* ---------- Normalizzazione categorie (string -> {key,full}) ---------- */
+function normalizeAllCategories(){
+  const out = [];
+  if(!Array.isArray(allCategories)) { allCategories = []; return; }
+  allCategories.forEach((c, idx) => {
+    if (c && typeof c === 'object' && c.key && c.full) {
+      out.push(c);
+      return;
+    }
+    if (typeof c === 'string') {
+      let base = c.slice(0, TRUNC_LEN);
+      let key = base;
+      let suffix = 1;
+      while(out.some(x => x.key === key)){
+        const suf = String(suffix++);
+        key = base.slice(0, TRUNC_LEN - suf.length) + suf;
+      }
+      out.push({ key, full: c });
+      return;
+    }
+    const fallbackFull = String(c || `Categoria ${idx+1}`);
+    let base = fallbackFull.slice(0, TRUNC_LEN);
+    let key = base;
+    let suffix = 1;
+    while(out.some(x => x.key === key)){
+      const suf = String(suffix++);
+      key = base.slice(0, TRUNC_LEN - suf.length) + suf;
+    }
+    out.push({ key, full: fallbackFull });
+  });
+  allCategories = out;
+}
+
+/* ---------- UI helpers ---------- */
+function showSheetsCount(n){
+  const el = document.getElementById('sheetsCountLabel');
+  if(!el) return;
+  el.textContent = `N. fogli: ${n}`;
+  el.style.display = 'inline-block';
+}
+
+function showPresetToast(msg = 'Preset applicato', ms = 2200){
+  const t = document.getElementById('presetToast');
+  if(!t) return;
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(()=>{ t.style.opacity = '0'; }, ms);
+}
+
+function updateDriveButtonLabel(loaded) {
+  const btn = document.getElementById('driveExcelBtn');
+  if (!btn) return;
+  btn.textContent = loaded ? "Aggiorna Excel dal Drive" : "Carica Excel dal Drive";
+}
+
+/* ---------- Google Drive + GIS ---------- */
+const GDRIVE_CLIENT_ID = '641611618956-b3fq35ednc26bpce0e4562mt3f4779s1.apps.googleusercontent.com';
+const GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+const GDRIVE_DEFAULT_FILE_ID = '14fGXwzyPOaj-1upHKwa_1q6K3CaH7Y9A';
+
+let driveTokenClient = null;
+let driveAccessToken = null;
+
+function initDriveTokenClient() {
+  if (driveTokenClient) return;
+  if (!window.google || !google.accounts || !google.accounts.oauth2) {
+    console.error('Google Identity Services non disponibile');
+    return;
+  }
+  driveTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GDRIVE_CLIENT_ID,
+    scope: GDRIVE_SCOPES,
+    callback: (resp) => {
+      if (resp.error) {
+        console.error('Errore token GIS', resp);
+        alert('Errore autenticazione Google Drive: ' + (resp.error_description || resp.error));
+        return;
+      }
+      driveAccessToken = resp.access_token;
+    }
+  });
+}
+
+function ensureDriveToken() {
+  return new Promise((resolve, reject) => {
+    initDriveTokenClient();
+    if (!driveTokenClient) return reject(new Error('Token client non inizializzato'));
+    if (driveAccessToken) return resolve(driveAccessToken);
+    driveTokenClient.callback = (resp) => {
+      if (resp.error) {
+        console.error('Errore token GIS', resp);
+        reject(new Error(resp.error_description || resp.error));
+        return;
+      }
+      driveAccessToken = resp.access_token;
+      resolve(driveAccessToken);
+    };
+    driveTokenClient.requestAccessToken({ prompt: 'consent' });
+  });
+}
+
+async function driveFetch(url, options = {}) {
+  const token = await ensureDriveToken();
+  const headers = Object.assign({}, options.headers || {}, {
+    Authorization: 'Bearer ' + token
+  });
+  const res = await fetch(url, Object.assign({}, options, { headers }));
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+  return res;
+}
+
+async function tryLoadDriveFileById(fileId, filename) {
+  try {
+    const metaRes = await driveFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType`);
+    const meta = await metaRes.json();
+    const mime = meta.mimeType;
+    let downloadUrl;
+    if (mime === 'application/vnd.google-apps.spreadsheet') {
+      downloadUrl = `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`;
+    } else {
+      downloadUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+    }
+    const fileRes = await driveFetch(downloadUrl);
+    const arrayBuffer = await fileRes.arrayBuffer();
+    localStorage.setItem('gdrive_last_fileid', fileId);
+    if (filename || meta.name) localStorage.setItem('gdrive_last_filename', filename || meta.name);
+    await handleDriveArrayBuffer(arrayBuffer, filename || meta.name);
+  } catch (err) {
+    console.error('Errore download Drive file', err);
+    alert('Errore download file da Drive: ' + (err.message || err));
+  }
+}
+
+async function handleDriveArrayBuffer(arrayBuffer, filename) {
+  try {
+    const data = new Uint8Array(arrayBuffer);
+    const wb = XLSX.read(data, { type: 'array' });
+
+    workbookData = {}; allCategories = [];
+
+    wb.SheetNames.forEach(name => {
+      const ws = wb.Sheets[name];
+      const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+      if (json.length < 2) return;
+      const headers = json[0].map(h => String(h).trim());
+      const rows = json.slice(1).map(r => {
+        const obj = {};
+        headers.forEach((h, i) => obj[h] = r[i] ?? "");
+        return obj;
+      });
+      const normalized = rows.map(r => ({
+        ID: r['ID'] || r['Id'] || r['id'] || '',
+        Tema: r['Tema'] || r['tema'] || name,
+        Domanda: r['Domanda'] || r['Question'] || '',
+        Tipologia: r['Tipologia'] || r['Type'] || '',
+        RispostaA: r['Risposta A'] || r['RispostaA'] || r['A'] || '',
+        RispostaB: r['Risposta B'] || r['RispostaB'] || r['B'] || '',
+        RispostaC: r['Risposta C'] || r['RispostaC'] || r['C'] || '',
+        RispostaD: r['Risposta D'] || r['RispostaD'] || r['D'] || '',
+        RispostaE: r['Risposta E'] || r['RispostaE'] || r['E'] || '',
+        RispostaF: r['Risposta F'] || r['RispostaF'] || r['F'] || '',
+        Difficolta: r['Difficoltà'] || r['Difficolta'] || r['Difficulty'] || '',
+        Data: r['Data Creazione'] || r['Data'] || r['Date'] || ''
+      }));
+
+      const baseKey = name.slice(0, TRUNC_LEN);
+      let uniqueKey = baseKey;
+      let suffix = 1;
+      while (workbookData.hasOwnProperty(uniqueKey)) {
+        const suf = String(suffix++);
+        uniqueKey = baseKey.slice(0, TRUNC_LEN - suf.length) + suf;
+      }
+      workbookData[uniqueKey] = normalized;
+      allCategories.push({ key: uniqueKey, full: name });
+    });
+
+    buildFiltersUI();
+    repairCatsFromAllCategories();
+    const sheets = Object.keys(workbookData).length;
+    const statusArea = document.getElementById('statusArea');
+    if (statusArea) statusArea.innerText = `File caricato da Drive: ${sheets} fogli (${filename || ''})`;
+    showSheetsCount(sheets);
+    showPresetToast('File caricato da Drive');
+    updateDriveButtonLabel(true);
+  } catch (err) {
+    console.error('Errore parsing Drive ArrayBuffer', err);
+    alert('Errore parsing file Excel da Drive: ' + (err.message || err));
+  }
+}
+
+/* ---------- DOMContentLoaded ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  const fileInput = document.getElementById('fileInput');
+  const openPresetBtn = document.getElementById('openPresetBtn');
+  const presetInput = document.getElementById('presetInput');
+  const exportPresetBtn = document.getElementById('exportPresetBtn');
+  const toggleAllCatsEl = document.getElementById('toggleAllCats');
+
+  document.getElementById('localExcelBtn').addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', (ev) => {
+    const f = ev.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        workbookData = {}; allCategories = [];
+        wb.SheetNames.forEach(name => {
+          const ws = wb.Sheets[name];
+          const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+          if (json.length < 2) return;
+          const headers = json[0].map(h => String(h).trim());
+          const rows = json.slice(1).map(r => {
+            const obj = {};
+            headers.forEach((h, i) => obj[h] = r[i] ?? "";
+            return obj;
+          });
+          const normalized = rows.map(r => ({
+            ID: r['ID'] || r['Id'] || r['id'] || '',
+            Tema: r['Tema'] || r['tema'] || name,
+            Domanda: r['Domanda'] || r['Question'] || '',
+            Tipologia: r['Tipologia'] || r['Type'] || '',
+            RispostaA: r['Risposta A'] || r['RispostaA'] || r['A'] || '',
+            RispostaB: r['Risposta B'] || r['RispostaB'] || r['B'] || '',
+            RispostaC: r['Risposta C'] || r['RispostaC'] || r['C'] || '',
+            RispostaD: r['Risposta D'] || r['RispostaD'] || r['D'] || '',
+            RispostaE: r['Risposta E'] || r['RispostaE'] || r['E'] || '',
+            RispostaF: r['Risposta F'] || r['RispostaF'] || r['F'] || '',
+            Difficolta: r['Difficoltà'] || r['Difficolta'] || r['Difficulty'] || '',
+            Data: r['Data Creazione'] || r['Data'] || r['Date'] || ''
+          }));
+
+          const baseKey = name.slice(0, TRUNC_LEN);
+          let uniqueKey = baseKey;
+          let suffix = 1;
+          while (workbookData.hasOwnProperty(uniqueKey)) {
+            const suf = String(suffix++);
+            uniqueKey = baseKey.slice(0, TRUNC_LEN - suf.length) + suf;
+          }
+          workbookData[uniqueKey] = normalized;
+          allCategories.push({ key: uniqueKey, full: name });
+        });
+
+        buildFiltersUI();
+        repairCatsFromAllCategories();
+
+        const sheets = Object.keys(workbookData).length;
+        const statusArea = document.getElementById('statusArea');
+        if (statusArea) statusArea.innerText = `File caricato: ${sheets} fogli`;
+        showSheetsCount(sheets);
+      } catch (err) {
+        alert('Errore parsing Excel: ' + (err && err.message ? err.message : err));
+      }
+    };
+    reader.readAsArrayBuffer(f);
+    fileInput.value = '';
+  });
+
+  document.getElementById('driveExcelBtn').addEventListener('click', async () => {
+    try {
+      await ensureDriveToken();
+      await tryLoadDriveFileById(GDRIVE_DEFAULT_FILE_ID);
+    } catch (err) {
+      alert("Errore caricamento file da Drive: " + (err.message || err));
+    }
+  });
+
+  function buildFiltersUI() {
+    normalizeAllCategories();
+    const typesArea = document.getElementById('typesArea');
+    const catsArea = document.getElementById('catsArea');
+    typesArea.innerHTML = ''; catsArea.innerHTML = '';
+
+    allTypes.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'chk';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'typeChk';
+      input.dataset.type = t;
+      input.checked = true;
+      const label = document.createElement('label');
+      label.appendChild(input);
+      const span = document.createElement('span');
+      span.textContent = ' ' + t;
+      label.appendChild(span);
+      div.appendChild(label);
+      typesArea.appendChild(div);
+    });
+
+    allCategories.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'chk';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'catChk';
+      input.dataset.cat = c.key;
+      input.checked = true;
+      const label = document.createElement('label');
+      label.appendChild(input);
+      const span = document.createElement('span');
+      span.className = 'cat-label';
+      span.textContent = c.full;
+      span.title = c.full;
+      label.appendChild(span);
+      div.appendChild(label);
+      catsArea.appendChild(div);
+    });
+
+    if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
+    setupDifficultySync();
+  }
+
+  function repairCatsFromAllCategories(){
+    normalizeAllCategories();
+    const catsArea = document.getElementById('catsArea');
+    if(!catsArea) return;
+    catsArea.innerHTML = '';
+    allCategories.forEach(c => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'chk';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'catChk';
+      input.dataset.cat = c.key;
+      input.checked = true;
+      const label = document.createElement('label');
+      label.appendChild(input);
+      const span = document.createElement('span');
+      span.className = 'cat-label';
+      span.textContent = c.full;
+      span.title = c.full;
+      label.appendChild(span);
+      wrapper.appendChild(label);
+      catsArea.appendChild(wrapper);
+    });
+    if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb=>cb.checked);
+  }
+
+  openPresetBtn.addEventListener('click', () => presetInput.click());
+
+  presetInput.addEventListener('change', (ev) => {
+    const f = ev.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const lines = e.target.result.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      document.querySelectorAll('.catChk').forEach(cb => cb.checked = false);
+      lines.forEach(line => {
+        document.querySelectorAll('.catChk').forEach(cb => {
+          const key = cb.dataset.cat;
+          const catObj = allCategories.find(ac => ac.key === key);
+          const full = catObj ? catObj.full : '';
+          if (key === line || full === line) cb.checked = true;
+        });
+      });
+      if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
+      showPresetToast();
+    };
+    reader.readAsText(f, 'utf-8');
+    presetInput.value = '';
+  });
+
+  exportPresetBtn.addEventListener('click', () => {
+    const selected = Array.from(document.querySelectorAll('.catChk')).filter(cb => cb.checked).map(cb => cb.dataset.cat);
+    if (selected.length === 0) return alert('Nessuna categoria selezionata');
+    const blob = new Blob([selected.join('\n')], { type: 'text/plain;charset=utf-8' });
+    saveAs(blob, `preset_categorie_${Date.now()}.txt`);
+  });
+
+  if (toggleAllCatsEl) {
+    toggleAllCatsEl.addEventListener('change', (e) => {
+      const v = e.target.checked;
+      document.querySelectorAll('.catChk').forEach(cb => cb.checked = v);
+    });
+  }
+
+  function setupDifficultySync() {
+    const diffAllCheckbox = document.getElementById('diff_all');
+    const diffCheckboxes = Array.from(document.querySelectorAll('.diffChk'));
+    if (!diffAllCheckbox) return;
+    diffAllCheckbox.addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      diffCheckboxes.forEach(cb => cb.checked = checked);
+    });
+    diffCheckboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        const allChecked = diffCheckboxes.every(d => d.checked);
+        diffAllCheckbox.checked = allChecked;
+      });
+    });
+  }
+  setupDifficultySync();
+
+  function getSelectedFilters() {
+    const typeChecks = Array.from(document.querySelectorAll('.typeChk')).filter(i => i.checked).map(i => i.dataset.type);
+    if (typeChecks.length === 0) throw new Error('Seleziona almeno una tipologia');
+
+    const isOpenType = t => (t||'').toLowerCase().includes('risposta aperta');
+    const othersCount = typeChecks.filter(t => !isOpenType(t)).length;
+
+    const baseWeights = {};
+    typeChecks.forEach(t => {
+      if (isOpenType(t)) {
+        if (othersCount === 0) baseWeights[t] = 1;
+        else baseWeights[t] = (0.10 * othersCount) / (1 - 0.10);
+      } else {
+        baseWeights[t] = 1;
+      }
+    });
+
+    const totalW = Object.values(baseWeights).reduce((a,b)=>a+b,0);
+    const typePct = {};
+    typeChecks.forEach(t => typePct[t] = (baseWeights[t] / totalW));
+
+    const selectedCats = Array.from(document.querySelectorAll('.catChk')).filter(cb => cb.checked).map(cb => cb.dataset.cat);
+    if (selectedCats.length === 0) throw new Error('Seleziona almeno una categoria');
+
+    const allDiff = document.getElementById('diff_all') && document.getElementById('diff_all').checked;
+    const diffChecks = Array.from(document.querySelectorAll('.diffChk')).filter(i => i.checked).map(i => i.dataset.diff);
+    const diffs = allDiff ? ['all'] : (diffChecks.length ? diffChecks : ['all']);
+
+    const order = document.getElementById('orderSelect').value;
+    const desc = document.getElementById('descCheckbox').checked;
+    const totalN = Math.max(1, parseInt(document.getElementById('totalInput').value || 0));
+
+    return { typePct, typeChecks, selectedCats, diffs, order, desc, totalN };
+  }
+
+  function filterPoolByDifficulty(pool, diffs){
+    if(diffs.includes('all')) return pool;
+    const wantedCounts = diffs.map(d => countStars(d));
+    return pool.filter(q => {
+      const qStars = countStars(q.Difficolta || "");
+      return wantedCounts.includes(qStars);
+    });
+  }
+
+  function buildPool(selectedCats, diffs){
+    let pool = [];
+    selectedCats.forEach(catKey => {
+      const arr = workbookData[catKey] || [];
+      const filtered = filterPoolByDifficulty(arr, diffs);
+      filtered.forEach(q => {
+        const copy = Object.assign({}, q);
+        copy._category = catKey;
+        copy._normTipologia = norm(copy.Tipologia);
+        copy._normCategory = norm(copy._category);
+        copy._answersCount = ['RispostaA','RispostaB','RispostaC','RispostaD','RispostaE','RispostaF']
+          .map(k => (copy[k]||'').toString().trim()).filter(Boolean).length;
+        pool.push(copy);
+      });
+    });
+    return pool;
+  }
+
+  function allocateCounts(N, typePct, typeChecks, selectedCats, pool){
+    const targetType = {};
+    typeChecks.forEach(t => targetType[t] = Math.round(N * (typePct[t] || 0)));
+    let sum = Object.values(targetType).reduce((a,b)=>a+b,0);
+    while(sum !== N){
+      const diff = N - sum;
+      const key = typeChecks[Math.abs(diff) % typeChecks.length];
+      targetType[key] += Math.sign(diff);
+      sum = Object.values(targetType).reduce((a,b)=>a+b,0);
+    }
+    const perCellTargets = {};
+    typeChecks.forEach(t => {
+      perCellTargets[t] = {};
+      const tNorm = norm(t);
+      const poolType = pool.filter(q => q._normTipologia === tNorm);
+      const countsByCat = {};
+      selectedCats.forEach(c => {
+        const cNorm = norm(c);
+        countsByCat[c] = poolType.filter(q => q._normCategory === cNorm).length;
+      });
+      const totalAvailable = Object.values(countsByCat).reduce((a,b)=>a+b,0);
+      if(totalAvailable === 0){
+        selectedCats.forEach(c => perCellTargets[t][c] = 0);
+      } else {
+        selectedCats.forEach(c => perCellTargets[t][c] = Math.round(targetType[t] * (countsByCat[c] / totalAvailable)));
+        let s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
+        while(s !== targetType[t]){
+          const diff = targetType[t] - s;
+          const cat = selectedCats[Math.abs(diff) % selectedCats.length];
+          perCellTargets[t][cat] += Math.sign(diff);
+          s = Object.values(perCellTargets[t]).reduce((a,b)=>a+b,0);
+        }
+      }
+    });
+    return { targetType, perCellTargets };
+  }
+
+  function sampleQuestions(perCellTargets, pool){
+    const chosen = []; const usedIDs = new Set();
+    for(const t of Object.keys(perCellTargets)){
+      const tNorm = norm(t);
+      for(const c of Object.keys(perCellTargets[t])){
+        const need = perCellTargets[t][c];
+        if(need <= 0) continue;
+        const cNorm = norm(c);
+        const candidatesAll = pool.filter(q => q._normTipologia === tNorm && q._normCategory === cNorm && !usedIDs.has(q.ID));
+        const candidatesWithAnswers = candidatesAll.filter(q => q._answersCount > 0);
+        const candidatesNoAnswers = candidatesAll.filter(q => q._answersCount === 0);
+        const candidates = candidatesWithAnswers.length ? candidatesWithAnswers : candidatesNoAnswers;
+        shuffleArray(candidates);
+        const take = candidates.slice(0, need);
+        take.forEach(q => { chosen.push(q); usedIDs.add(q.ID); });
+      }
+    }
+    return { chosen, usedIDs };
+  }
+
+  function fillRemaining(N, chosen, pool, usedIDs){
+    let remaining = N - chosen.length;
+    if(remaining <= 0) return chosen;
+    const candidates = pool.filter(q => !usedIDs.has(q.ID));
+    shuffleArray(candidates);
+    const take = candidates.slice(0, remaining);
+    take.forEach(q => chosen.push(q));
+    return chosen;
+  }
+
+  function enforceOpenCap(chosen, pool, usedIDs, cfg, openQuestionPredicate){
+    const N = cfg.totalN;
+    const selectedTypes = cfg.typeChecks || [];
+    const onlyOpenSelected = selectedTypes.length === 1 && (selectedTypes[0]||'').toLowerCase().includes('risposta aperta');
+    if (onlyOpenSelected) return { chosen, usedIDs };
+
+    const maxOpen = Math.floor(0.10 * N);
+    const isOpen = q => openQuestionPredicate(q);
+    let openIndices = [];
+    chosen.forEach((q, idx) => { if (isOpen(q)) openIndices.push(idx); });
+
+    if (openIndices.length <= maxOpen) return { chosen, usedIDs };
+
+    const toReplace = openIndices.length - maxOpen;
+    let replaced = 0;
+    const nonOpenCandidates = pool.filter(q => !usedIDs.has(q.ID) && !isOpen(q) && (q._answersCount > 0));
+    shuffleArray(nonOpenCandidates);
+
+    for(let i = openIndices.length - 1; i >= 0 && replaced < toReplace; i--){
+      const idx = openIndices[i];
+      const replacement = nonOpenCandidates.shift();
+      if (!replacement) break;
+      const removed = chosen[idx];
+      if (removed && removed.ID) usedIDs.delete(removed.ID);
+      chosen[idx] = replacement;
+      usedIDs.add(replacement.ID);
+      replaced++;
+    }
+
+    return { chosen, usedIDs };
+  }
+
+  document.getElementById('previewBtn').addEventListener('click', () => {
+    try {
+      const cfg = getSelectedFilters();
+      const pool = buildPool(cfg.selectedCats, cfg.diffs);
+      const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
+      document.getElementById('previewArea').innerHTML = `
+        Pool totale disponibile: <strong>${pool.length}</strong><br>
+        Target per tipologia: <pre style="color:#e9e2c6">${JSON.stringify(alloc.targetType,null,2)}</pre>
+        Target per cella (tipo x categoria): <pre style="color:#e9e2c6">${JSON.stringify(alloc.perCellTargets,null,2)}</pre>
+      `;
+    } catch(err){
+      alert(err.message);
+    }
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', async () => {
+    try {
+      const cfg = getSelectedFilters();
+      const pool = buildPool(cfg.selectedCats, cfg.diffs);
+      if(pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
+      const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
+      let { chosen, usedIDs } = sampleQuestions(alloc.perCellTargets, pool);
+      chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
+
+      const openQuestionPredicate = q => (q.Tipologia || q._normTipologia || '').toLowerCase().includes('risposta aperta');
+      ({ chosen, usedIDs } = enforceOpenCap(chosen, pool, usedIDs, cfg, openQuestionPredicate));
+
+      if (chosen.length < cfg.totalN) chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
+
+      if(cfg.order === 'random') shuffleArray(chosen);
+      else if(cfg.order === 'alpha_global') chosen.sort((a,b)=> (a.Domanda||'').localeCompare(b.Domanda||''));
+      else if(cfg.order === 'alpha_cat') chosen.sort((a,b)=> a._category !== b._category ? a._category.localeCompare(b._category) : (a.Domanda||'').localeCompare(b.Domanda||''));
+      else if(cfg.order === 'difficulty') chosen.sort((a,b)=> countStars(a.Difficolta||'') - countStars(b.Difficolta||''));
+      if(cfg.desc) chosen.reverse();
+
+      selectedQuestions = chosen.slice(0, cfg.totalN);
+      await generatePdf(selectedQuestions, cfg);
+    } catch(err){
+      alert(err.message);
+    }
+  });
+
+  async function generatePdf(questions, cfg){
+    const container = document.createElement('div');
+    container.style.width = '1200px';
+    container.style.padding = '24px';
+    container.style.fontFamily = 'Arial, Helvetica, sans-serif';
+    container.style.color = '#111';
+    container.style.background = '#fff';
+    container.style.position = 'relative';
+
+    const styleInline = document.createElement('style');
+    styleInline.innerHTML = `.real-answer{background:#691258;color:#fff;padding:4px 6px;border-radius:4px;display:inline-block}`;
+    container.appendChild(styleInline);
+
+    const header = document.createElement('div');
+    header.innerHTML = `<h1 style="margin:0;color:#120E01">NelGrimorio Quiz NERD</h1>
+      <div style="margin-top:6px">Totale domande: <strong>${questions.length}</strong></div>
+      <div style="margin-top:6px">Filtri: Difficoltà=${cfg.diffs.join(',')}, Ordinamento=${cfg.order}, Decrescente=${cfg.desc}</div>
+      <hr style="margin:12px 0">`;
+    container.appendChild(header);
+
+    questions.forEach((q, idx) => {
+      const qDiv = document.createElement('div');
+      qDiv.style.marginBottom = '12px';
+      qDiv.innerHTML = `<div style="font-weight:700">${idx+1}. ${escapeHtml(q.Domanda)}</div>`;
+      const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
+      if(answers.length){
+        answers.forEach((a,i) => {
+          const p = document.createElement('div');
+          p.style.marginLeft = '12px';
+          let text = a;
+          let isReal = false;
+          if (text.includes('###')) {
+            text = text.replace(/###/g, '').trim();
+            isReal = true;
+          }
+          p.innerHTML = `<strong>${String.fromCharCode(65+i)})</strong> ${escapeHtml(text)}`;
+          if (isReal) p.classList.add('real-answer');
+          qDiv.appendChild(p);
+        });
+      } else {
+        const p = document.createElement('div'); p.style.marginLeft='12px'; p.innerHTML = `<em>Risposta aperta</em>`; qDiv.appendChild(p);
+      }
+      const meta = document.createElement('div'); meta.style.marginTop='6px'; meta.style.color='#666'; meta.style.fontSize='12px';
+      meta.innerText = `Categoria: ${q._category} • Tipologia: ${q.Tipologia} • Difficoltà: ${q.Difficolta}`;
+      qDiv.appendChild(meta);
+      container.appendChild(qDiv);
+      const hr = document.createElement('hr'); hr.style.margin='8px 0'; container.appendChild(hr);
+    });
+
+    const previewHolder = document.getElementById("preview-container");
+    if (previewHolder) {
+      previewHolder.innerHTML = "";
+      previewHolder.appendChild(container);
+    } else {
+      document.body.appendChild(container);
+    }
+
+    const opt = { margin:10, filename:`quiz_export_${Date.now()}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'pt',format:'a4',orientation:'portrait'} };
+    try {
+      if (!container.innerHTML || container.innerHTML.trim().length < 20) throw new Error('Container PDF vuoto prima della conversione');
+      await html2pdf().set(opt).from(container).save();
+    } catch(err){
+      alert('Errore durante la generazione del PDF: ' + (err && err.message ? err.message : err));
+    } finally {
+      if (!document.getElementById("preview-container") && container && container.parentNode) container.parentNode.removeChild(container);
+    }
+  }
+
+  let currentIndex = 0;
+  function openViewer(questions){
+    currentIndex = 0;
+    document.getElementById('viewer').style.display = 'flex';
+    renderSlide();
+  }
+  function renderSlide(){
+    const container = document.getElementById('slideContent');
+    const q = selectedQuestions[currentIndex];
+    const answers = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF].map(s=> (s||'').trim()).filter(Boolean);
+    container.innerHTML = `<h2 style="margin:0 0 8px 0">Domanda ${currentIndex+1} / ${selectedQuestions.length}</h2>
+      <h3 style="margin:0 0 12px 0">${escapeHtml(q.Domanda)}</h3>
+      <div>${answers.length ? answers.map((a,i)=>{
+        let text = a;
+        let cls = '';
+        if (text.includes('###')) { text = text.replace(/###/g,'').trim(); cls = 'real-answer'; }
+        return `<div style="margin:6px 0"><strong>${String.fromCharCode(65+i)})</strong> <span class="${cls}">${escapeHtml(text)}</span></div>`;
+      }).join('') : '<em>Risposta aperta</em>'}</div>
+      <div style="margin-top:12px;color:#666">Categoria: ${escapeHtml(q._category)} • Tipologia: ${escapeHtml(q.Tipologia)} • Difficoltà: ${escapeHtml(q.Difficolta)}</div>`;
+  }
+  document.getElementById('nextQ').addEventListener('click', ()=>{ if(currentIndex < selectedQuestions.length-1) currentIndex++; renderSlide(); });
+  document.getElementById('prevQ').addEventListener('click', ()=>{ if(currentIndex > 0) currentIndex--; renderSlide(); });
+  document.getElementById('closeViewer').addEventListener('click', ()=>{ document.getElementById('viewer').style.display='none'; });
+  document.getElementById('fsBtn').addEventListener('click', ()=>{ const el=document.getElementById('slide'); if(el.requestFullscreen) el.requestFullscreen(); });
+
+  document.getElementById('startGameBtn').addEventListener('click', () => {
+    try {
+      const cfg = getSelectedFilters();
+      const pool = buildPool(cfg.selectedCats, cfg.diffs);
+      if(pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
+
+      shuffleArray(pool);
+      let chosen = pool.slice(0, cfg.totalN);
+      const usedIDs = new Set(chosen.map(q => q.ID));
+      const openQuestionPredicate = q => (q.Tipologia || q._normTipologia || '').toLowerCase().includes('risposta aperta');
+      ({ chosen } = enforceOpenCap(chosen, pool, usedIDs, cfg, openQuestionPredicate));
+      if (chosen.length < cfg.totalN) chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
+
+      selectedQuestions = chosen.slice(0, cfg.totalN);
+      openViewer(selectedQuestions);
+    } catch(err){ alert(err.message); }
+  });
+
+}); // end DOMContentLoaded
 </script>
 </body>
 </html>
