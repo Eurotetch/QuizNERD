@@ -170,6 +170,45 @@ function countStars(s){ return (normalizeStars(s).match(/⭐/g)||[]).length; }
 function escapeHtml(s){ if(!s) return ''; return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
 function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
 
+
+function normalizeAllCategories(){
+  // Trasforma allCategories in array di oggetti { key, full }
+  // Se è già in quel formato, lo lascia intatto.
+  const TRUNC_LEN = 25;
+  const out = [];
+  if(!Array.isArray(allCategories)) { allCategories = []; return; }
+  allCategories.forEach((c, idx) => {
+    if (c && typeof c === 'object' && c.key && c.full) {
+      out.push(c);
+      return;
+    }
+    // se è stringa, crea key troncata e assicurati unicità
+    if (typeof c === 'string') {
+      let base = c.slice(0, TRUNC_LEN);
+      let key = base;
+      let suffix = 1;
+      while(out.some(x => x.key === key)){
+        const suf = String(suffix++);
+        key = base.slice(0, TRUNC_LEN - suf.length) + suf;
+      }
+      out.push({ key, full: c });
+      return;
+    }
+    // fallback: crea un placeholder
+    const fallbackFull = String(c || `Categoria ${idx+1}`);
+    let base = fallbackFull.slice(0, TRUNC_LEN);
+    let key = base;
+    let suffix = 1;
+    while(out.some(x => x.key === key)){
+      const suf = String(suffix++);
+      key = base.slice(0, TRUNC_LEN - suf.length) + suf;
+    }
+    out.push({ key, full: fallbackFull });
+  });
+  allCategories = out;
+}
+
+
 /* ---------- DOMContentLoaded ---------- */
 document.addEventListener('DOMContentLoaded', () => {
   const openFileBtn = document.getElementById('openFileBtn');
@@ -253,7 +292,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ---------- Build filtri in modo sicuro ---------- */
-  function buildFiltersUI() {
+  function buildFiltersUI(){
+	  normalizeAllCategories(); // assicura formato coerente
 	  const typesArea = document.getElementById('typesArea');
 	  const catsArea = document.getElementById('catsArea');
 	  typesArea.innerHTML = ''; catsArea.innerHTML = '';
@@ -276,24 +316,22 @@ document.addEventListener('DOMContentLoaded', () => {
 		typesArea.appendChild(div);
 	  });
 
-	  // Categorie: allCategories è array di { key, full }
+	  // Categorie: usa oggetti {key, full}
 	  allCategories.forEach(c => {
 		const div = document.createElement('div');
 		div.className = 'chk';
 		const input = document.createElement('input');
 		input.type = 'checkbox';
 		input.className = 'catChk';
-		// dataset.cat contiene la key troncata (usata per logiche ed export)
-		input.dataset.cat = c.key;
+		input.dataset.cat = c.key; // key troncata usata per logiche ed export
 		input.checked = true;
 
 		const label = document.createElement('label');
 		label.appendChild(input);
 
-		// mostra il nome completo in pagina, ma dataset resta la key
 		const span = document.createElement('span');
 		span.className = 'cat-label';
-		span.textContent = c.full; // full name visible
+		span.textContent = c.full; // mostra il nome completo
 		span.title = c.full;
 		label.appendChild(span);
 
@@ -307,31 +345,36 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 
+
   /* ---------- Ripara categorie malformate (ricostruzione sicura) ---------- */
   function repairCatsFromAllCategories(){
-    const catsArea = document.getElementById('catsArea');
-    if(!catsArea) return;
-    catsArea.innerHTML = '';
-    allCategories.forEach(name => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'chk';
-      const input = document.createElement('input');
-      input.type = 'checkbox';
-      input.className = 'catChk';
-      input.dataset.cat = name;
-      input.checked = true;
-      const label = document.createElement('label');
-      label.appendChild(input);
-      const span = document.createElement('span');
-      span.className = 'cat-label';
-      span.textContent = (name.length > 48 ? name.slice(0,45)+'…' : name);
-      span.title = name;
-      label.appendChild(span);
-      wrapper.appendChild(label);
-      catsArea.appendChild(wrapper);
-    });
-    if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb=>cb.checked);
-  }
+	  // Ricostruisce le checkbox a partire da allCategories (oggetti {key, full})
+	  normalizeAllCategories();
+	  const catsArea = document.getElementById('catsArea');
+	  if(!catsArea) return;
+	  catsArea.innerHTML = '';
+	  allCategories.forEach(c => {
+		const wrapper = document.createElement('div');
+		wrapper.className = 'chk';
+		const input = document.createElement('input');
+		input.type = 'checkbox';
+		input.className = 'catChk';
+		input.dataset.cat = c.key;
+		input.checked = true;
+		const label = document.createElement('label');
+		label.appendChild(input);
+		const span = document.createElement('span');
+		span.className = 'cat-label';
+		span.textContent = c.full;
+		span.title = c.full;
+		label.appendChild(span);
+		wrapper.appendChild(label);
+		catsArea.appendChild(wrapper);
+	  });
+	  const toggleAll = document.getElementById('toggleAllCats');
+	  if (toggleAll) toggleAll.checked = Array.from(document.querySelectorAll('.catChk')).every(cb=>cb.checked);
+	}
+
 
   /* ---------- Preset import/export (single-step) ---------- */
   openPresetBtn.addEventListener('click', () => presetInput.click());
