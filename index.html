@@ -159,10 +159,11 @@
 
 <script>
 /* ---------- Stato e helper ---------- */
-let workbookData = {};
+let workbookData = {}; // keyed by truncated key
 let allTypes = ['4 Risposte','6 Risposte','Vero/Falso','Frase interrotta a 2 risposte','Continua la risposta','Risposta aperta'];
 let selectedQuestions = [];
-let allCategories = [];
+let allCategories = []; // array of { key, full }
+const TRUNC_LEN = 25;
 
 function norm(s){ return (s||'').toString().trim().toLowerCase(); }
 function normalizeStars(s){ if(!s) return ''; return s.replace(/[\u2605\u2B50★☆✶✷✸✹✺✻✼✽✾✿]/g,'⭐').trim(); }
@@ -170,11 +171,8 @@ function countStars(s){ return (normalizeStars(s).match(/⭐/g)||[]).length; }
 function escapeHtml(s){ if(!s) return ''; return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
 function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
 
-
+/* ---------- Normalizzazione categorie (string -> {key,full}) ---------- */
 function normalizeAllCategories(){
-  // Trasforma allCategories in array di oggetti { key, full }
-  // Se è già in quel formato, lo lascia intatto.
-  const TRUNC_LEN = 25;
   const out = [];
   if(!Array.isArray(allCategories)) { allCategories = []; return; }
   allCategories.forEach((c, idx) => {
@@ -182,7 +180,6 @@ function normalizeAllCategories(){
       out.push(c);
       return;
     }
-    // se è stringa, crea key troncata e assicurati unicità
     if (typeof c === 'string') {
       let base = c.slice(0, TRUNC_LEN);
       let key = base;
@@ -194,7 +191,6 @@ function normalizeAllCategories(){
       out.push({ key, full: c });
       return;
     }
-    // fallback: crea un placeholder
     const fallbackFull = String(c || `Categoria ${idx+1}`);
     let base = fallbackFull.slice(0, TRUNC_LEN);
     let key = base;
@@ -207,7 +203,6 @@ function normalizeAllCategories(){
   });
   allCategories = out;
 }
-
 
 /* ---------- DOMContentLoaded ---------- */
 document.addEventListener('DOMContentLoaded', () => {
@@ -254,22 +249,17 @@ document.addEventListener('DOMContentLoaded', () => {
             Difficolta: r['Difficoltà'] || r['Difficolta'] || r['Difficulty'] || '',
             Data: r['Data Creazione'] || r['Data'] || r['Date'] || ''
           }));
-          
-		  // key troncata a 25 caratteri (costante)
-			const TRUNC_LEN = 25;
 
-			// dentro il forEach dei fogli, invece di usare name direttamente:
-			const categoryKey = name.slice(0, TRUNC_LEN);
-			let uniqueKey = categoryKey;
-			let suffix = 1;
-			// se per caso due fogli hanno la stessa key troncata, rendila unica aggiungendo suffisso
-			while (workbookData.hasOwnProperty(uniqueKey)) {
-			  uniqueKey = categoryKey.slice(0, TRUNC_LEN - String(suffix).length) + String(suffix);
-			  suffix++;
-			}
-			workbookData[uniqueKey] = normalized;
-			allCategories.push({ key: uniqueKey, full: name });
-
+          // crea key troncata e assicurati unicità
+          const baseKey = name.slice(0, TRUNC_LEN);
+          let uniqueKey = baseKey;
+          let suffix = 1;
+          while (workbookData.hasOwnProperty(uniqueKey)) {
+            const suf = String(suffix++);
+            uniqueKey = baseKey.slice(0, TRUNC_LEN - suf.length) + suf;
+          }
+          workbookData[uniqueKey] = normalized;
+          allCategories.push({ key: uniqueKey, full: name });
         });
 
         // ricostruisci UI filtri in modo sicuro
@@ -292,127 +282,110 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ---------- Build filtri in modo sicuro ---------- */
-  function buildFiltersUI(){
-	  normalizeAllCategories(); // assicura formato coerente
-	  const typesArea = document.getElementById('typesArea');
-	  const catsArea = document.getElementById('catsArea');
-	  typesArea.innerHTML = ''; catsArea.innerHTML = '';
+  function buildFiltersUI() {
+    normalizeAllCategories();
+    const typesArea = document.getElementById('typesArea');
+    const catsArea = document.getElementById('catsArea');
+    typesArea.innerHTML = ''; catsArea.innerHTML = '';
 
-	  // Tipologie (unchanged)
-	  allTypes.forEach(t => {
-		const div = document.createElement('div');
-		div.className = 'chk';
-		const input = document.createElement('input');
-		input.type = 'checkbox';
-		input.className = 'typeChk';
-		input.dataset.type = t;
-		input.checked = true;
-		const label = document.createElement('label');
-		label.appendChild(input);
-		const span = document.createElement('span');
-		span.textContent = ' ' + t;
-		label.appendChild(span);
-		div.appendChild(label);
-		typesArea.appendChild(div);
-	  });
+    allTypes.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'chk';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'typeChk';
+      input.dataset.type = t;
+      input.checked = true;
+      const label = document.createElement('label');
+      label.appendChild(input);
+      const span = document.createElement('span');
+      span.textContent = ' ' + t;
+      label.appendChild(span);
+      div.appendChild(label);
+      typesArea.appendChild(div);
+    });
 
-	  // Categorie: usa oggetti {key, full}
-	  allCategories.forEach(c => {
-		const div = document.createElement('div');
-		div.className = 'chk';
-		const input = document.createElement('input');
-		input.type = 'checkbox';
-		input.className = 'catChk';
-		input.dataset.cat = c.key; // key troncata usata per logiche ed export
-		input.checked = true;
+    allCategories.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'chk';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'catChk';
+      input.dataset.cat = c.key;
+      input.checked = true;
+      const label = document.createElement('label');
+      label.appendChild(input);
+      const span = document.createElement('span');
+      span.className = 'cat-label';
+      span.textContent = c.full;
+      span.title = c.full;
+      label.appendChild(span);
+      div.appendChild(label);
+      catsArea.appendChild(div);
+    });
 
-		const label = document.createElement('label');
-		label.appendChild(input);
-
-		const span = document.createElement('span');
-		span.className = 'cat-label';
-		span.textContent = c.full; // mostra il nome completo
-		span.title = c.full;
-		label.appendChild(span);
-
-		div.appendChild(label);
-		catsArea.appendChild(div);
-	  });
-
-	  const toggleAll = document.getElementById('toggleAllCats');
-	  if (toggleAll) toggleAll.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
-	  setupDifficultySync();
-	}
-
-
+    if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
+    setupDifficultySync();
+  }
 
   /* ---------- Ripara categorie malformate (ricostruzione sicura) ---------- */
   function repairCatsFromAllCategories(){
-	  // Ricostruisce le checkbox a partire da allCategories (oggetti {key, full})
-	  normalizeAllCategories();
-	  const catsArea = document.getElementById('catsArea');
-	  if(!catsArea) return;
-	  catsArea.innerHTML = '';
-	  allCategories.forEach(c => {
-		const wrapper = document.createElement('div');
-		wrapper.className = 'chk';
-		const input = document.createElement('input');
-		input.type = 'checkbox';
-		input.className = 'catChk';
-		input.dataset.cat = c.key;
-		input.checked = true;
-		const label = document.createElement('label');
-		label.appendChild(input);
-		const span = document.createElement('span');
-		span.className = 'cat-label';
-		span.textContent = c.full;
-		span.title = c.full;
-		label.appendChild(span);
-		wrapper.appendChild(label);
-		catsArea.appendChild(wrapper);
-	  });
-	  const toggleAll = document.getElementById('toggleAllCats');
-	  if (toggleAll) toggleAll.checked = Array.from(document.querySelectorAll('.catChk')).every(cb=>cb.checked);
-	}
+    normalizeAllCategories();
+    const catsArea = document.getElementById('catsArea');
+    if(!catsArea) return;
+    catsArea.innerHTML = '';
+    allCategories.forEach(c => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'chk';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'catChk';
+      input.dataset.cat = c.key;
+      input.checked = true;
+      const label = document.createElement('label');
+      label.appendChild(input);
+      const span = document.createElement('span');
+      span.className = 'cat-label';
+      span.textContent = c.full;
+      span.title = c.full;
+      label.appendChild(span);
+      wrapper.appendChild(label);
+      catsArea.appendChild(wrapper);
+    });
+    if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb=>cb.checked);
+  }
 
-
-  /* ---------- Preset import/export (single-step) ---------- */
+  /* ---------- Preset import/export (single-step, compatibile full/key) ---------- */
   openPresetBtn.addEventListener('click', () => presetInput.click());
 
   presetInput.addEventListener('change', (ev) => {
-	  const f = ev.target.files[0];
-	  if (!f) return;
-	  const reader = new FileReader();
-	  reader.onload = (e) => {
-		const lines = e.target.result.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-		// deseleziona tutte
-		document.querySelectorAll('.catChk').forEach(cb => cb.checked = false);
-		// per ogni riga del preset, prova a matchare key o full
-		lines.forEach(line => {
-		  document.querySelectorAll('.catChk').forEach(cb => {
-			const key = cb.dataset.cat;
-			// trova l'oggetto full corrispondente
-			const catObj = allCategories.find(ac => ac.key === key);
-			const full = catObj ? catObj.full : '';
-			if (key === line || full === line) cb.checked = true;
-		  });
-		});
-		const toggleAll = document.getElementById('toggleAllCats');
-		if (toggleAll) toggleAll.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
-		alert('Preset applicato');
-	  };
-	  reader.readAsText(f, 'utf-8');
-	  presetInput.value = '';
-	});
-
+    const f = ev.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const lines = e.target.result.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      document.querySelectorAll('.catChk').forEach(cb => cb.checked = false);
+      lines.forEach(line => {
+        document.querySelectorAll('.catChk').forEach(cb => {
+          const key = cb.dataset.cat;
+          const catObj = allCategories.find(ac => ac.key === key);
+          const full = catObj ? catObj.full : '';
+          if (key === line || full === line) cb.checked = true;
+        });
+      });
+      if (toggleAllCatsEl) toggleAllCatsEl.checked = Array.from(document.querySelectorAll('.catChk')).every(cb => cb.checked);
+      alert('Preset applicato');
+    };
+    reader.readAsText(f, 'utf-8');
+    presetInput.value = '';
+  });
 
   exportPresetBtn.addEventListener('click', () => {
-	  const selected = Array.from(document.querySelectorAll('.catChk')).filter(cb => cb.checked).map(cb => cb.dataset.cat);
-	  if (selected.length === 0) return alert('Nessuna categoria selezionata');
-	  const blob = new Blob([selected.join('\n')], { type: 'text/plain;charset=utf-8' });
-	  saveAs(blob, `preset_categorie_${Date.now()}.txt`);
-	});
-
+    const selected = Array.from(document.querySelectorAll('.catChk')).filter(cb => cb.checked).map(cb => cb.dataset.cat);
+    if (selected.length === 0) return alert('Nessuna categoria selezionata');
+    const blob = new Blob([selected.join('\n')], { type: 'text/plain;charset=utf-8' });
+    saveAs(blob, `preset_categorie_${Date.now()}.txt`);
+  });
 
   /* ---------- Toggle tutte le categorie ---------- */
   if (toggleAllCatsEl) {
@@ -440,31 +413,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   setupDifficultySync();
 
-  /* ---------- Filtri lettura con cap per 'Risposta aperta' (max 10%) ---------- */
+  /* ---------- Filtri lettura con cap per 'Risposta aperta' (calcolo pesi) ---------- */
   function getSelectedFilters() {
     const typeChecks = Array.from(document.querySelectorAll('.typeChk')).filter(i => i.checked).map(i => i.dataset.type);
     if (typeChecks.length === 0) throw new Error('Seleziona almeno una tipologia');
 
-    // assegna peso base: 1 per tutte, ma calcola base per "Risposta aperta" in modo che non superi il 10% se ci sono altre tipologie
-    const isOpenType = t => t.toLowerCase().includes('risposta aperta');
+    const isOpenType = t => (t||'').toLowerCase().includes('risposta aperta');
     const othersCount = typeChecks.filter(t => !isOpenType(t)).length;
 
     const baseWeights = {};
     typeChecks.forEach(t => {
       if (isOpenType(t)) {
-        // se non ci sono altre tipologie, lascia 1 (100% se è l'unica scelta)
         if (othersCount === 0) baseWeights[t] = 1;
-        else {
-          // calcola peso base per ottenere esattamente il 10% rispetto alla somma degli altri (f = 0.1)
-          // baseOpen = f * sumOthers / (1 - f) ; sumOthers = othersCount * 1
-          baseWeights[t] = (0.1 * othersCount) / (1 - 0.1); // = 0.1 * othersCount / 0.9
-        }
+        else baseWeights[t] = (0.10 * othersCount) / (1 - 0.10);
       } else {
         baseWeights[t] = 1;
       }
     });
 
-    // normalizza in percentuali
     const totalW = Object.values(baseWeights).reduce((a,b)=>a+b,0);
     const typePct = {};
     typeChecks.forEach(t => typePct[t] = (baseWeights[t] / totalW));
@@ -495,12 +461,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function buildPool(selectedCats, diffs){
     let pool = [];
-    selectedCats.forEach(cat => {
-      const arr = workbookData[cat] || [];
+    selectedCats.forEach(catKey => {
+      const arr = workbookData[catKey] || [];
       const filtered = filterPoolByDifficulty(arr, diffs);
       filtered.forEach(q => {
         const copy = Object.assign({}, q);
-        copy._category = cat;
+        copy._category = catKey;
         copy._normTipologia = norm(copy.Tipologia);
         copy._normCategory = norm(copy._category);
         copy._answersCount = ['RispostaA','RispostaB','RispostaC','RispostaD','RispostaE','RispostaF']
@@ -579,6 +545,39 @@ document.addEventListener('DOMContentLoaded', () => {
     return chosen;
   }
 
+  /* ---------- Enforce cap on open questions (max 10%) ---------- */
+  function enforceOpenCap(chosen, pool, usedIDs, cfg, openQuestionPredicate){
+    const N = cfg.totalN;
+    const selectedTypes = cfg.typeChecks || [];
+    const onlyOpenSelected = selectedTypes.length === 1 && (selectedTypes[0]||'').toLowerCase().includes('risposta aperta');
+    if (onlyOpenSelected) return { chosen, usedIDs };
+
+    const maxOpen = Math.floor(0.10 * N);
+    const isOpen = q => openQuestionPredicate(q);
+    let openIndices = [];
+    chosen.forEach((q, idx) => { if (isOpen(q)) openIndices.push(idx); });
+
+    if (openIndices.length <= maxOpen) return { chosen, usedIDs };
+
+    const toReplace = openIndices.length - maxOpen;
+    let replaced = 0;
+    const nonOpenCandidates = pool.filter(q => !usedIDs.has(q.ID) && !isOpen(q) && (q._answersCount > 0));
+    shuffleArray(nonOpenCandidates);
+
+    for(let i = openIndices.length - 1; i >= 0 && replaced < toReplace; i--){
+      const idx = openIndices[i];
+      const replacement = nonOpenCandidates.shift();
+      if (!replacement) break;
+      const removed = chosen[idx];
+      if (removed && removed.ID) usedIDs.delete(removed.ID);
+      chosen[idx] = replacement;
+      usedIDs.add(replacement.ID);
+      replaced++;
+    }
+
+    return { chosen, usedIDs };
+  }
+
   /* ---------- Anteprima conteggi ---------- */
   document.getElementById('previewBtn').addEventListener('click', () => {
     try {
@@ -595,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* ---------- Export PDF ---------- */
+  /* ---------- Export PDF (con enforceOpenCap) ---------- */
   document.getElementById('exportBtn').addEventListener('click', async () => {
     try {
       const cfg = getSelectedFilters();
@@ -604,6 +603,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const alloc = allocateCounts(cfg.totalN, cfg.typePct, cfg.typeChecks, cfg.selectedCats, pool);
       let { chosen, usedIDs } = sampleQuestions(alloc.perCellTargets, pool);
       chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
+
+      const openQuestionPredicate = q => (q.Tipologia || q._normTipologia || '').toLowerCase().includes('risposta aperta');
+      ({ chosen, usedIDs } = enforceOpenCap(chosen, pool, usedIDs, cfg, openQuestionPredicate));
+
+      if (chosen.length < cfg.totalN) chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
 
       if(cfg.order === 'random') shuffleArray(chosen);
       else if(cfg.order === 'alpha_global') chosen.sort((a,b)=> (a.Domanda||'').localeCompare(b.Domanda||''));
@@ -618,7 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* ---------- Genera PDF con html2pdf ---------- */
+  /* ---------- Genera PDF con html2pdf (senza appendice soluzioni) ---------- */
   async function generatePdf(questions, cfg){
     const container = document.createElement('div');
     container.style.width = '1200px';
@@ -668,14 +672,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const hr = document.createElement('hr'); hr.style.margin='8px 0'; container.appendChild(hr);
     });
 
-    const solHeader = document.createElement('div'); solHeader.innerHTML = `<h2>Appendice soluzioni</h2>`; container.appendChild(solHeader);
-    questions.forEach((q, idx) => {
-      const answersRaw = [q.RispostaA,q.RispostaB,q.RispostaC,q.RispostaD,q.RispostaE,q.RispostaF];
-      let sol = "[non specificata]";
-      for(let i=0;i<answersRaw.length;i++){ if((answersRaw[i]||'').includes('###')){ sol = String.fromCharCode(65+i); break; } }
-      const p = document.createElement('div'); p.style.marginBottom='6px'; p.innerText = `${idx+1}. ${sol}`; container.appendChild(p);
-    });
-
     const previewHolder = document.getElementById("preview-container");
     if (previewHolder) {
       previewHolder.innerHTML = "";
@@ -691,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(err){
       alert('Errore durante la generazione del PDF: ' + (err && err.message ? err.message : err));
     } finally {
-      if (!previewHolder && container && container.parentNode) container.parentNode.removeChild(container);
+      if (!document.getElementById("preview-container") && container && container.parentNode) container.parentNode.removeChild(container);
     }
   }
 
@@ -721,14 +717,22 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('closeViewer').addEventListener('click', ()=>{ document.getElementById('viewer').style.display='none'; });
   document.getElementById('fsBtn').addEventListener('click', ()=>{ const el=document.getElementById('slide'); if(el.requestFullscreen) el.requestFullscreen(); });
 
-  /* ---------- Apri sessione Gioco ---------- */
+  /* ---------- Apri sessione Gioco (applica enforceOpenCap anche qui) ---------- */
   document.getElementById('startGameBtn').addEventListener('click', () => {
     try {
       const cfg = getSelectedFilters();
       const pool = buildPool(cfg.selectedCats, cfg.diffs);
       if(pool.length === 0) return alert('Pool vuoto con i filtri selezionati');
+
+      // semplice sampling: prendi pool mescolato e applica cap open
       shuffleArray(pool);
-      selectedQuestions = pool.slice(0, cfg.totalN);
+      let chosen = pool.slice(0, cfg.totalN);
+      const usedIDs = new Set(chosen.map(q => q.ID));
+      const openQuestionPredicate = q => (q.Tipologia || q._normTipologia || '').toLowerCase().includes('risposta aperta');
+      ({ chosen } = enforceOpenCap(chosen, pool, usedIDs, cfg, openQuestionPredicate));
+      if (chosen.length < cfg.totalN) chosen = fillRemaining(cfg.totalN, chosen, pool, usedIDs);
+
+      selectedQuestions = chosen.slice(0, cfg.totalN);
       openViewer(selectedQuestions);
     } catch(err){ alert(err.message); }
   });
