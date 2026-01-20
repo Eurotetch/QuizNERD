@@ -67,10 +67,17 @@
       <div class="card">
         <label>Carica file Excel (.xlsx)</label>
         <div class="row">
-          <button id="openFileBtn" class="ghost">Carica file Excel Domande</button>
-          <span id="sheetsCountLabel" class="small">fogli totali: 0</span>
-          <input id="fileInput" type="file" accept=".xlsx,.xls" style="display:none" />
-        </div>
+		  <button id="localExcelBtn" class="ghost">Carica Excel locale</button>
+
+		  <button id="driveExcelBtn" class="ghost">Carica Excel dal Drive</button>
+
+		  <span id="sheetsCountLabel" class="small" style="display:none;margin-left:12px">
+			N. fogli: 0
+		  </span>
+
+		  <input id="fileInput" type="file" accept=".xlsx,.xls" style="display:none" />
+		</div>
+
 
         <div style="height:12px"></div>
         <label>TIPOLOGIE DOMANDE</label>
@@ -249,7 +256,10 @@
 	  const toggleAllCatsEl = document.getElementById('toggleAllCats');
 
 	  /* ---------- Caricamento Excel (single-step) ---------- */
-	  openFileBtn.addEventListener('click', () => fileInput.click());
+	  document.getElementById('localExcelBtn').addEventListener('click', () => {
+		  document.getElementById('fileInput').click();
+		});
+
 
 	  fileInput.addEventListener('change', (ev) => {
 		const f = ev.target.files[0];
@@ -777,6 +787,8 @@
 		/* ---------- Google Drive integration (OAuth2 + download + parse) ---------- */
 	const GDRIVE_CLIENT_ID = '641611618956-b3fq35ednc26bpce0e4562mt3f4779s1.apps.googleusercontent.com'; // <--- https://console.cloud.google.com/auth/overview?project=nel-grimorio-quiz-nerd
 	const GDRIVE_API_KEY = '';     // opzionale, utile per files.list quota
+	const GDRIVE_DEFAULT_FILE_ID = "14fGXwzyPOaj-1upHKwa_1q6K3CaH7Y9A";
+
 
 	// Scopes: solo lettura Drive
 	const GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
@@ -959,6 +971,22 @@
 		alert('Errore download file da Drive: ' + (err.message || err));
 	  }
 	}
+	
+	function updateDriveButtonLabel(loaded) {
+	  const btn = document.getElementById('driveExcelBtn');
+	  if (!btn) return;
+	  btn.textContent = loaded ? "Aggiorna Excel dal Drive" : "Carica Excel dal Drive";
+	}
+
+	document.getElementById('driveExcelBtn').addEventListener('click', async () => {
+	  try {
+		await initGapiAndSignIn(); // login OAuth
+		await tryLoadDriveFileById(GDRIVE_DEFAULT_FILE_ID); // carica il file
+		updateDriveButtonLabel(true); // cambia testo in "Aggiorna"
+	  } catch (err) {
+		alert("Errore caricamento file da Drive: " + (err.message || err));
+	  }
+	});
 
 	// funzione che integra l'ArrayBuffer scaricato con la tua logica esistente
 	// questa funzione esegue il parsing XLSX e popola workbookData/allCategories e UI
@@ -1016,6 +1044,9 @@
 		if (statusArea) statusArea.innerText = `File caricato da Drive: ${sheets} fogli (${filename || ''})`;
 		showSheetsCount(sheets);
 		showPresetToast('File caricato da Drive');
+		
+		updateDriveButtonLabel(true);
+
 
 	  } catch (err) {
 		console.error('Errore parsing Drive ArrayBuffer', err);
@@ -1046,6 +1077,7 @@
 		document.head.appendChild(s);
 	  }
 	});
+
 
 </script>
 </body>
